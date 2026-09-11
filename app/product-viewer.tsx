@@ -59,3 +59,4 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await wrapper.current?.requestFullscreen();}catch{setError("Tela cheia indisponível neste navegador.");}}
  return <div className="viewer-wrap" ref={wrapper}><div ref={host} className="viewer-canvas"/><div className="viewer-actions"><Button variant="outline" size="icon" aria-label="Restaurar visão" title="Restaurar visão" onClick={()=>reset.current()}><RotateCcw/></Button><Button variant="outline" size="icon" aria-label={full?"Sair da tela cheia":"Visualizar em tela cheia"} onClick={fullscreen}>{full?<Minimize/>:<Maximize/>}</Button></div>{loading&&<div className="viewer-loading" role="status">Carregando arte…</div>}{error&&<div className="viewer-error" role="alert">{error}</div>}<div className="viewer-hint"><Rotate3D size={14}/>Arraste para girar · role para ampliar</div></div>;
 }
+
