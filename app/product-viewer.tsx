@@ -13,6 +13,14 @@ export function modelProfile(name:string):Profile { name=name.toUpperCase();
  if(name.includes("TAÇA")||name==="TULIPA"){
   if(name==="TULIPA")return {points:[[.1,0],[.31,.025],[.32,.06],[.26,.15],[.23,.27],[.28,.55],[.41,.92],[.42,1.32],[.38,1.55]],printMin:.25};
   const gin=name.includes("GIN"),wine=name.includes("VINHO");
+  if(gin){
+   // Smooth bowl with a shared vertical tangent at its widest point. Both the
+   // body and the artwork below use these same samples; dimensions remain approximate.
+   const lower=new THREE.CubicBezierCurve(new THREE.Vector2(.04,.57),new THREE.Vector2(.04,.72),new THREE.Vector2(.56,.69),new THREE.Vector2(.56,1.05));
+   const upper=new THREE.CubicBezierCurve(new THREE.Vector2(.56,1.05),new THREE.Vector2(.56,1.25),new THREE.Vector2(.49,1.42),new THREE.Vector2(.43,1.54));
+   const bowl=[...lower.getPoints(64),...upper.getPoints(64).slice(1)].map(p=>[p.x,p.y] as [number,number]);
+   return {points:[[.02,0],[.39,.02],[.41,.045],[.37,.07],[.045,.09],...bowl],printMin:.68};
+  }
   return {points:[[.02,0],[.39,.02],[.41,.045],[.37,.07],[.045,.09],[.04,.57],[.09,.61],[.23,.66],[gin?.48:.36,.82],[gin?.56: .45,1.05],[gin?.54: .44,1.27],[wine?.3:.43,1.54]],printMin:.68};
  }
  if(name.includes("BALDE"))return {points:[[.02,0],[.62,.02],[.65,.08],[.84,1.2],[.87,1.23],[.86,1.26]],printMin:.1}; if(name.includes("GARRAFA"))return {points:[[.02,0],[.3,.025],[.34,.07],[.35,1.25],[.32,1.4],[.17,1.57],[.16,1.8],[.18,1.81]],printMin:.08};
@@ -51,4 +59,3 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await wrapper.current?.requestFullscreen();}catch{setError("Tela cheia indisponível neste navegador.");}}
  return <div className="viewer-wrap" ref={wrapper}><div ref={host} className="viewer-canvas"/><div className="viewer-actions"><Button variant="outline" size="icon" aria-label="Restaurar visão" title="Restaurar visão" onClick={()=>reset.current()}><RotateCcw/></Button><Button variant="outline" size="icon" aria-label={full?"Sair da tela cheia":"Visualizar em tela cheia"} onClick={fullscreen}>{full?<Minimize/>:<Maximize/>}</Button></div>{loading&&<div className="viewer-loading" role="status">Carregando arte…</div>}{error&&<div className="viewer-error" role="alert">{error}</div>}<div className="viewer-hint"><Rotate3D size={14}/>Arraste para girar · role para ampliar</div></div>;
 }
-
