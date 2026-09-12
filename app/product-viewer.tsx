@@ -4,6 +4,7 @@ import {Maximize,Minimize,RotateCcw,Rotate3D} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {COLORS,type Product} from "@/lib/catalog";
 import * as THREE from "three";
+import {printArea,containRect,faceGeometry,wrapGeometry} from "@/lib/print-layout";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 
@@ -36,7 +37,7 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  try{
  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0xffffff);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;el.replaceChildren(renderer.domElement);renderer.domElement.setAttribute("aria-label","Modelo 3D interativo. Arraste para girar; use a roda do mouse para ampliar.");
  const camera=new THREE.PerspectiveCamera(32,1,.01,100);const profile=modelProfile(product.model),height=profile.points.at(-1)![1];
- camera.position.set(0,height*.75,height*3.7);controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,height*.49,0);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=height*1.8;controls.maxDistance=height*7;controls.maxPolarAngle=Math.PI*.88;controls.autoRotate=true;controls.autoRotateSpeed=.6;controls.addEventListener("start",()=>{if(controls)controls.autoRotate=false;});reset.current=()=>{camera.position.set(0,height*.75,height*3.7);controls?.target.set(0,height*.49,0);if(controls)controls.autoRotate=true;};
+ camera.position.set(0,height*.75,height*3.7);controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,height*.49,0);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=height*1.8;controls.maxDistance=height*7;controls.maxPolarAngle=Math.PI*.88;controls.autoRotate=false;controls.autoRotateSpeed=.6;controls.addEventListener("start",()=>{if(controls)controls.autoRotate=false;});reset.current=()=>{camera.position.set(0,height*.75,height*3.7);controls?.target.set(0,height*.49,0);if(controls)controls.autoRotate=false;};
  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();environment=pmrem.fromScene(room,.04);scene.environment=environment.texture;room.dispose();pmrem.dispose();scene.add(new THREE.HemisphereLight(0xffffff,0xa6b0c2,2));
  const light=new THREE.DirectionalLight(0xffffff,4);light.position.set(-3,5,4);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.camera.left=-3;light.shadow.camera.right=3;light.shadow.camera.top=3;light.shadow.camera.bottom=-3;light.shadow.normalBias=.03;scene.add(light);
  const fill=new THREE.DirectionalLight(0xe5eeff,2);fill.position.set(3,2,-2);scene.add(fill);
@@ -47,14 +48,42 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  if(profile.handle){const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(.36,height*.83,0),new THREE.Vector3(.74,height*.8,0),new THREE.Vector3(.78,height*.47,0),new THREE.Vector3(.68,height*.22,0),new THREE.Vector3(.36,height*.23,0)]);const handle=new THREE.Mesh(new THREE.TubeGeometry(curve,48,.045,12,false),mat);handle.castShadow=true;scene.add(handle);}
  const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({color:0x718099,opacity:.18}));floor.rotation.x=-Math.PI/2;floor.position.y=-.01;floor.receiveShadow=true;scene.add(floor);
  if(product.art){const source=`/api/studio/assets/${product.art.id}${token?`?token=${encodeURIComponent(token)}`:""}`;new THREE.TextureLoader().load(source,(raw)=>{
-  if(disposed){raw.dispose();return;}textures.push(raw);const canvas=document.createElement("canvas");canvas.width=2048;canvas.height=1024;const context=canvas.getContext("2d")!;const img=raw.image as HTMLImageElement;const ratio=Math.min(canvas.width/img.width,canvas.height/img.height);const w=img.width*ratio,h=img.height*ratio;context.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
-  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(renderer!.capabilities.getMaxAnisotropy(),8);textures.push(tex);
-  const points=Array.from({length:65},(_,i)=>{const y=profile.printMin+(height*.93-profile.printMin)*i/64;let a=outer[0],b=outer[1];for(let j=1;j<outer.length;j++){if(outer[j].y>=y){a=outer[j-1];b=outer[j];break;}}const t=(y-a.y)/Math.max(.0001,b.y-a.y);return new THREE.Vector2(a.x+(b.x-a.x)*t+.002,y);});if(points.length>=2){const printGeo=new THREE.LatheGeometry(points,128);if(profile.twist){const pos=printGeo.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),y=pos.getY(i),s=1+.03*Math.sin(Math.atan2(z,x)*12+y*2);pos.setXYZ(i,x*s,y,z*s);}printGeo.computeVertexNormals();}const printMat=new THREE.MeshStandardMaterial({map:tex,transparent:true,roughness:.4,metalness:0,side:THREE.FrontSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});const printMesh=new THREE.Mesh(printGeo,printMat);scene.add(printMesh);}setLoading(false);
+  if(disposed){raw.dispose();return;}textures.push(raw);
+  const faces=product.print==="SILK FRENTE E VERSO";
+  const area=printArea(profile,product.model,faces);
+  const canvas=document.createElement("canvas");
+  // Pixel ratio follows the actual print surface, rather than stretching a
+  // fixed 2:1 texture over every product. Transparent source margins stay intact.
+  const aspect=area.width/area.height;
+  canvas.width=Math.min(4096,Math.max(512,Math.round(1536*aspect)));
+  canvas.height=Math.round(canvas.width/aspect);
+  const context=canvas.getContext("2d")!;
+  const img=raw.image as HTMLImageElement;
+  const split=faces&&product.artMode==="template";
+  const sourceWidth=split?img.width/2:img.width;
+  const rect=containRect(sourceWidth,img.height,canvas.width,canvas.height,faces?.06:.012);
+  context.drawImage(img,0,0,sourceWidth,img.height,rect.x,rect.y,rect.width,rect.height);
+  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
+  tex.anisotropy=Math.min(renderer!.capabilities.getMaxAnisotropy(),8);textures.push(tex);
+  const printGeo=faces?faceGeometry(profile,area):wrapGeometry(profile,area);
+  const printMat=new THREE.MeshStandardMaterial({map:tex,transparent:true,roughness:.85,metalness:0,side:THREE.FrontSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});
+  const printMesh=new THREE.Mesh(printGeo,printMat);scene.add(printMesh);
+  if(faces){
+   let backMat=printMat;
+   if(split){
+    const backCanvas=document.createElement("canvas");backCanvas.width=canvas.width;backCanvas.height=canvas.height;
+    backCanvas.getContext("2d")!.drawImage(img,sourceWidth,0,sourceWidth,img.height,rect.x,rect.y,rect.width,rect.height);
+    const backTexture=new THREE.CanvasTexture(backCanvas);backTexture.colorSpace=THREE.SRGBColorSpace;backTexture.anisotropy=tex.anisotropy;textures.push(backTexture);
+    backMat=printMat.clone();backMat.map=backTexture;
+   }
+   const back=new THREE.Mesh(printGeo,backMat);back.rotation.y=Math.PI;scene.add(back);
+  }
+  setLoading(false);
  },undefined,()=>{if(!disposed){setError("A arte não pôde ser carregada. Reabra a apresentação ou tente novamente.");setLoading(false);}});}else setLoading(false);
  const resize=()=>{if(!renderer)return;const w=el.clientWidth||600,h=el.clientHeight||480;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();};observer=new ResizeObserver(resize);observer.observe(el);resize();const tick=()=>{if(disposed)return;controls?.update();renderer?.render(scene,camera);frame=requestAnimationFrame(tick);};tick();
  }catch{setError("Não foi possível iniciar o 3D. Use um navegador com WebGL e aceleração gráfica habilitados.");setLoading(false);}
  return ()=>{disposed=true;cancelAnimationFrame(frame);observer?.disconnect();controls?.dispose();textures.forEach(t=>t.dispose());const materials=new Set<THREE.Material>();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>materials.add(m));}});materials.forEach(m=>m.dispose());environment?.dispose();renderer?.dispose();el.replaceChildren();};
- },[product.model,product.color,product.print,product.art?.id,token]);
+ },[product.model,product.color,product.print,product.art?.id,product.artMode,token]);
  useEffect(()=>{const f=()=>setFull(!!document.fullscreenElement);document.addEventListener("fullscreenchange",f);return()=>document.removeEventListener("fullscreenchange",f);},[]);
  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await wrapper.current?.requestFullscreen();}catch{setError("Tela cheia indisponível neste navegador.");}}
  return <div className="viewer-wrap" ref={wrapper}><div ref={host} className="viewer-canvas"/><div className="viewer-actions"><Button variant="outline" size="icon" aria-label="Restaurar visão" title="Restaurar visão" onClick={()=>reset.current()}><RotateCcw/></Button><Button variant="outline" size="icon" aria-label={full?"Sair da tela cheia":"Visualizar em tela cheia"} onClick={fullscreen}>{full?<Minimize/>:<Maximize/>}</Button></div>{loading&&<div className="viewer-loading" role="status">Carregando arte…</div>}{error&&<div className="viewer-error" role="alert">{error}</div>}<div className="viewer-hint"><Rotate3D size={14}/>Arraste para girar · role para ampliar</div></div>;

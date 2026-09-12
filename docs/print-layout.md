@@ -1,0 +1,11 @@
+# Aplicação da arte
+
+O Silk frente e verso usa duas áreas independentes, com centros a 180°. O padrão para arquivos antigos e novos é repetir o mesmo logotipo nas duas faces. A imagem é ajustada proporcionalmente, preservando suas margens transparentes. A visualização inicia de frente, sem rotação automática, para permitir a leitura.
+
+Na edição, “Gabarito completo” interpreta a metade esquerda do arquivo como a frente e a metade direita como o verso. As duas metades têm a mesma escala e são aplicadas em lados opostos; um lado vazio continua vazio. Enviar apenas a arte final, sem desenhos dos copos, cotas ou linhas de referência. PNG transparente preserva a cor do produto; fundos de JPG não são removidos automaticamente.
+
+Digital 360 e Silk 360 continuam usando uma faixa contínua. O ajuste proporcional agora considera as proporções da superfície, em vez de usar a mesma textura 2:1 para todos os modelos.
+
+A planilha “Planilha Layout 3D - Ecojoi (1).xlsx”, aba GABARITO, contém imagem identificada como 450 ML. B100:B110 informa área 235,8 × 138,5 mm, margens 3/3,5 mm, emenda 1,5 mm e faces a 180°. Essas medidas não foram atribuídas à taça gin nem a outros modelos: faltam seus gabaritos físicos. As áreas desses produtos continuam estimativas visuais, agora com aplicação legível. A distância entre centros informada de 119,4 mm não equivale exatamente à metade de 235,8 mm; confirmar com a produção antes de calibração dimensional.
+
+Não houve alteração dos modelos geométricos, autenticação, rotas, tabelas, arquivos de arte ou links existentes. `artMode` é um campo opcional no JSON do produto, validado pela API. Sem migração de banco. O componente de visualização é compartilhado pelo rascunho e apresentação pública.
