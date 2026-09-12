@@ -49,7 +49,8 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({color:0x718099,opacity:.18}));floor.rotation.x=-Math.PI/2;floor.position.y=-.01;floor.receiveShadow=true;scene.add(floor);
  if(product.art){const source=`/api/studio/assets/${product.art.id}${token?`?token=${encodeURIComponent(token)}`:""}`;new THREE.TextureLoader().load(source,(raw)=>{
   if(disposed){raw.dispose();return;}textures.push(raw);
-  const faces=product.print==="SILK FRENTE E VERSO";
+  const twoFaces=product.print==="SILK FRENTE E VERSO";
+  const faces=twoFaces||product.artMode!=="template";
   const area=printArea(profile,product.model,faces);
   const canvas=document.createElement("canvas");
   // Pixel ratio follows the actual print surface, rather than stretching a
@@ -59,7 +60,7 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
   canvas.height=Math.round(canvas.width/aspect);
   const context=canvas.getContext("2d")!;
   const img=raw.image as HTMLImageElement;
-  const split=faces&&product.artMode==="template";
+  const split=twoFaces&&product.artMode==="template";
   const sourceWidth=split?img.width/2:img.width;
   const rect=containRect(sourceWidth,img.height,canvas.width,canvas.height,faces?.06:.012);
   context.drawImage(img,0,0,sourceWidth,img.height,rect.x,rect.y,rect.width,rect.height);
@@ -68,7 +69,7 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
   const printGeo=faces?faceGeometry(profile,area):wrapGeometry(profile,area);
   const printMat=new THREE.MeshStandardMaterial({map:tex,transparent:true,roughness:.85,metalness:0,side:THREE.FrontSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});
   const printMesh=new THREE.Mesh(printGeo,printMat);scene.add(printMesh);
-  if(faces){
+  if(twoFaces){
    let backMat=printMat;
    if(split){
     const backCanvas=document.createElement("canvas");backCanvas.width=canvas.width;backCanvas.height=canvas.height;
