@@ -1,4 +1,7 @@
 import { sqliteTable,text,integer,index } from "drizzle-orm/sqlite-core";
+export const ecojoiAccounts=sqliteTable("ecojoi_accounts",{id:text("id").primaryKey(),ownerId:text("owner_id").notNull().unique(),email:text("email").notNull().unique(),name:text("name").notNull(),passwordHash:text("password_hash").notNull(),salt:text("salt").notNull(),disabled:integer("disabled").notNull().default(0)});
+export const ecojoiSessions=sqliteTable("ecojoi_sessions",{tokenHash:text("token_hash").primaryKey(),accountId:text("account_id").notNull().references(()=>ecojoiAccounts.id),expiresAt:integer("expires_at").notNull()},t=>[index("sessions_account").on(t.accountId),index("sessions_expiry").on(t.expiresAt)]);
+export const ecojoiAuthAttempts=sqliteTable("ecojoi_auth_attempts",{id:text("id").primaryKey(),attempts:integer("attempts").notNull(),expiresAt:integer("expires_at").notNull()},t=>[index("auth_attempts_expiry").on(t.expiresAt)]);
 export const designs = sqliteTable("designs",{
  id:text("id").primaryKey(),ownerId:text("owner_id").notNull(),name:text("name").notNull().default(""),products:text("products").notNull().default("[]"),createdAt:integer("created_at").notNull(),updatedAt:integer("updated_at").notNull(),expiresAt:integer("expires_at"),revokedAt:integer("revoked_at"),token:text("token").unique(),version:integer("version").notNull().default(1)
 }, t=>[index("designs_owner_created").on(t.ownerId,t.createdAt)]);

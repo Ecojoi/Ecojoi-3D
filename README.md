@@ -1,3 +1,15 @@
+# Atualização do acesso — 12/09/2026
+
+O Studio agora possui login próprio com e-mail e senha nas rotas `/` e `/login`. A conta inicial é vinculada ao proprietário já autenticado em `/ativar`, preservando seu identificador e seus designs. `ECOJOI_OWNER_EMAIL` deve ser configurado na hospedagem com o e-mail proprietário autorizado. Depois da ativação, os acessos diários não usam o ChatGPT. `/senha` altera a senha e invalida as sessões anteriores; Sair encerra a sessão atual.
+
+A sessão expira em oito horas e usa cookie HttpOnly, Secure e SameSite=Lax; somente seu hash fica no banco. Senhas usam PBKDF2-SHA256 com salt individual e 100.000 iterações. Há limite de tentativas por conta e IP. Não há cadastro público, envio de e-mails ou recuperação automática de senha. Recuperação administrativa e convites de equipe ainda não foram implementados. Não cadastrar contas no banco com senha em texto puro.
+
+Para exibir a entrada ECOJOI sem a tela anterior da plataforma, a audiência da hospedagem precisa permitir visitantes anônimos. O painel e as artes privadas continuam protegidos pela autenticação da aplicação; apresentações com token válido podem abrir para clientes. A migração 0002 adiciona somente tabelas de autenticação, sem modificar designs ou assets.
+
+Validação local: 17 verificações de autenticação e 27 de integração passaram. `tests/auth.mjs` exige banco local de teste sem a conta seedy@sites.test previamente ativada, migrações aplicadas e ECOJOI_OWNER_EMAIL=seedy@sites.test em .dev.vars. Não executar contra produção. A suíte de integração usa STUDIO_TEST_COOKIE para a sessão local. As seções abaixo registram a implantação original; suas referências ao login exclusivo do ChatGPT foram substituídas por esta atualização.
+
+---
+
 # ECOJOI Studio 3D — aplicação e implantação
 
 Versão de avaliação funcional baseada na inspeção autorizada da conta Designer ECOJOI na Amostra Virtual 3D, em 10 e 11/09/2026.

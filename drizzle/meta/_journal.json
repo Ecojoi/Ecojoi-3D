@@ -15,6 +15,13 @@
       "when": 1789125223781,
       "tag": "0001_moaning_steve_rogers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789182448067,
+      "tag": "0002_slow_blindfold",
+      "breakpoints": true
     }
   ]
 }
