@@ -1,5 +1,11 @@
 # Aplicação da arte
 
+## Tamanho do logotipo
+
+O modo logotipo agora oferece Pequeno, Médio e Grande, com Grande como padrão para produtos sem tamanho salvo. A largura máxima da face aumentou de 1,4 para 1,9 vezes o menor raio da faixa imprimível, ainda abaixo do diâmetro para manter a malha sobre a superfície. A margem interna passou de 6% para 2,5%. Em artes limitadas pela largura, isso aumenta o desenho em aproximadamente 47%, sem alterar a proporção nem recortar o arquivo. Pequeno usa 65% e Médio 82% do tamanho Grande. Artes limitadas pela altura continuam dentro da faixa útil.
+
+O campo opcional `logoSize` fica no JSON existente do produto e é validado pela API. Os gabaritos completos preservam a escala e o posicionamento da versão anterior; o controle de tamanho só aparece no modo logotipo. Não há migração de dados ou alteração do arquivo de arte.
+
 O Silk frente e verso usa duas áreas independentes, com centros a 180°. O padrão para arquivos antigos e novos é repetir o mesmo logotipo nas duas faces. A imagem é ajustada proporcionalmente, preservando suas margens transparentes. A visualização inicia de frente, sem rotação automática, para permitir a leitura.
 
 Na edição, “Gabarito completo” interpreta a metade esquerda do arquivo como a frente e a metade direita como o verso. As duas metades têm a mesma escala e são aplicadas em lados opostos; um lado vazio continua vazio. Enviar apenas a arte final, sem desenhos dos copos, cotas ou linhas de referência. PNG transparente preserva a cor do produto; fundos de JPG não são removidos automaticamente.

@@ -47,7 +47,7 @@ export function printArea(profile:PrintProfile,model:string,faces:boolean){
  const gap=profile.handle?.72:.06;
  const sweep=2*Math.PI-gap;
  const start=profile.handle?Math.PI/2+gap/2:Math.PI+gap/2;
- return {bottom,top,width:faces?minRadius*1.4:sweep*radius,height:top-bottom,start,sweep};
+ return {bottom,top,width:faces?minRadius*1.9:sweep*radius,height:top-bottom,start,sweep};
 }
 
 export function containRect(imageWidth:number,imageHeight:number,width:number,height:number,padding=0){

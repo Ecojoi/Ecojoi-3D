@@ -52,6 +52,8 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
   const twoFaces=product.print==="SILK FRENTE E VERSO";
   const faces=twoFaces||product.artMode!=="template";
   const area=printArea(profile,product.model,faces);
+  // Preserve the previously calibrated template width. Enlargement is for logos.
+  if(twoFaces&&product.artMode==="template")area.width*=1.4/1.9;
   const canvas=document.createElement("canvas");
   // Pixel ratio follows the actual print surface, rather than stretching a
   // fixed 2:1 texture over every product. Transparent source margins stay intact.
@@ -62,7 +64,13 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
   const img=raw.image as HTMLImageElement;
   const split=twoFaces&&product.artMode==="template";
   const sourceWidth=split?img.width/2:img.width;
-  const rect=containRect(sourceWidth,img.height,canvas.width,canvas.height,faces?.06:.012);
+  const isLogo=product.artMode!=="template";
+  const rect=containRect(sourceWidth,img.height,canvas.width,canvas.height,isLogo?.025:faces?.06:.012);
+  if(isLogo){
+   const scale=product.logoSize==="small"?.65:product.logoSize==="medium"?.82:1;
+   rect.width*=scale;rect.height*=scale;
+   rect.x=(canvas.width-rect.width)/2;rect.y=(canvas.height-rect.height)/2;
+  }
   context.drawImage(img,0,0,sourceWidth,img.height,rect.x,rect.y,rect.width,rect.height);
   const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
   tex.anisotropy=Math.min(renderer!.capabilities.getMaxAnisotropy(),8);textures.push(tex);
@@ -84,7 +92,7 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  const resize=()=>{if(!renderer)return;const w=el.clientWidth||600,h=el.clientHeight||480;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();};observer=new ResizeObserver(resize);observer.observe(el);resize();const tick=()=>{if(disposed)return;controls?.update();renderer?.render(scene,camera);frame=requestAnimationFrame(tick);};tick();
  }catch{setError("Não foi possível iniciar o 3D. Use um navegador com WebGL e aceleração gráfica habilitados.");setLoading(false);}
  return ()=>{disposed=true;cancelAnimationFrame(frame);observer?.disconnect();controls?.dispose();textures.forEach(t=>t.dispose());const materials=new Set<THREE.Material>();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>materials.add(m));}});materials.forEach(m=>m.dispose());environment?.dispose();renderer?.dispose();el.replaceChildren();};
- },[product.model,product.color,product.print,product.art?.id,product.artMode,token]);
+ },[product.model,product.color,product.print,product.art?.id,product.artMode,product.logoSize,token]);
  useEffect(()=>{const f=()=>setFull(!!document.fullscreenElement);document.addEventListener("fullscreenchange",f);return()=>document.removeEventListener("fullscreenchange",f);},[]);
  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await wrapper.current?.requestFullscreen();}catch{setError("Tela cheia indisponível neste navegador.");}}
  return <div className="viewer-wrap" ref={wrapper}><div ref={host} className="viewer-canvas"/><div className="viewer-actions"><Button variant="outline" size="icon" aria-label="Restaurar visão" title="Restaurar visão" onClick={()=>reset.current()}><RotateCcw/></Button><Button variant="outline" size="icon" aria-label={full?"Sair da tela cheia":"Visualizar em tela cheia"} onClick={fullscreen}>{full?<Minimize/>:<Maximize/>}</Button></div>{loading&&<div className="viewer-loading" role="status">Carregando arte…</div>}{error&&<div className="viewer-error" role="alert">{error}</div>}<div className="viewer-hint"><Rotate3D size={14}/>Arraste para girar · role para ampliar</div></div>;
