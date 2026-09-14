@@ -2,6 +2,10 @@ import { headers } from "next/headers";
 import { env } from "cloudflare:workers";
 export const COOKIE="__Host-ecojoi_session";
 export const authDb=()=> (env as unknown as {DB:D1Database}).DB;
+export function isEcojoiAdmin(user:{email:string}|null){
+ const owner=(env as unknown as {ECOJOI_OWNER_EMAIL?:string}).ECOJOI_OWNER_EMAIL?.trim().toLowerCase();
+ return !!owner&&!!user&&user.email.toLowerCase()===owner;
+}
 export const digest=async(value:string)=>Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value))),v=>v.toString(16).padStart(2,"0")).join("");
 export async function passwordHash(password:string,salt:string){
  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]);

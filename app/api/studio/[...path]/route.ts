@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { getEcojoiUser } from "@/app/ecojoi-auth";
+import { getEcojoiUser,isEcojoiAdmin } from "@/app/ecojoi-auth";
 import { COLORS,MODELS,PRINTS,colorsFor,requirements,type Design,type Product } from "@/lib/catalog";
 const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket};
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
@@ -27,7 +27,7 @@ async function route(req:Request,ctx:{params:Promise<{path:string[]}>}){
   if(!permitted)fail(403,"Acesso não autorizado.");const object=await bindings().BUCKET.get(a!.object_key);if(!object)fail(404,"Arquivo indisponível.");return new Response(object!.body,{headers:{"Content-Type":a!.type,"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer"}});
  }
  const user=await getEcojoiUser();if(!user)fail(401,"Entre para acessar seus designs.");const owner=user!.userId;
- if(path[0]==="me"&&req.method==="GET")return json({name:user!.displayName});
+ if(path[0]==="me"&&req.method==="GET")return json({name:user!.displayName,role:isEcojoiAdmin(user)?"admin":"user"});
  if(path[0]!=="designs")fail(404,"Página não encontrada.");
  if(!path[1]&&req.method==="GET"){const list=await db.prepare("SELECT * FROM designs WHERE owner_id=? ORDER BY created_at DESC").bind(owner).all<Row>();return json(list.results.map(unpack));}
  if(!path[1]&&req.method==="POST"){
