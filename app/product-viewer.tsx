@@ -5,6 +5,7 @@ import {Button} from "@/components/ui/button";
 import {COLORS,type Product} from "@/lib/catalog";
 import * as THREE from "three";
 import {printArea,containRect,faceGeometry,wrapGeometry} from "@/lib/print-layout";
+import {alphaBounds,templateFaces} from "@/lib/artwork-regions";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 
@@ -56,22 +57,35 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
   if(twoFaces&&product.artMode==="template")area.width*=1.4/1.9;
   const canvas=document.createElement("canvas");
   // Pixel ratio follows the actual print surface, rather than stretching a
-  // fixed 2:1 texture over every product. Transparent source margins stay intact.
+  // fixed 2:1 texture over every product.
   const aspect=area.width/area.height;
   canvas.width=Math.min(4096,Math.max(512,Math.round(1536*aspect)));
   canvas.height=Math.round(canvas.width/aspect);
   const context=canvas.getContext("2d")!;
   const img=raw.image as HTMLImageElement;
   const split=twoFaces&&product.artMode==="template";
-  const sourceWidth=split?img.width/2:img.width;
   const isLogo=product.artMode!=="template";
-  const rect=containRect(sourceWidth,img.height,canvas.width,canvas.height,isLogo?.025:faces?.06:.012);
+  const regions=templateFaces(product.model,img.width,img.height);
+  let sourceRegion=split?regions[0]:{x:0,y:0,width:img.width,height:img.height};
+  if(isLogo){
+   // Read a bounded mask to exclude transparent padding from logo sizing.
+   // Opaque white backgrounds and template margins are deliberately preserved.
+   try{
+    const mask=document.createElement("canvas"),scale=Math.min(1,4096/Math.max(img.width,img.height));
+    mask.width=Math.max(1,Math.round(img.width*scale));mask.height=Math.max(1,Math.round(img.height*scale));
+    const ctx=mask.getContext("2d",{willReadFrequently:true})!;
+    ctx.drawImage(img,0,0,mask.width,mask.height);
+    const bounds=alphaBounds(ctx.getImageData(0,0,mask.width,mask.height).data,mask.width,mask.height);
+    sourceRegion={x:bounds.x*img.width/mask.width,y:bounds.y*img.height/mask.height,width:bounds.width*img.width/mask.width,height:bounds.height*img.height/mask.height};
+   }catch{/* Fall back to the complete image if pixel access is unavailable. */}
+  }
+  const rect=containRect(sourceRegion.width,sourceRegion.height,canvas.width,canvas.height,isLogo?.025:faces?.06:.012);
   if(isLogo){
    const scale=product.logoSize==="small"?.65:product.logoSize==="medium"?.82:1;
    rect.width*=scale;rect.height*=scale;
    rect.x=(canvas.width-rect.width)/2;rect.y=(canvas.height-rect.height)/2;
   }
-  context.drawImage(img,0,0,sourceWidth,img.height,rect.x,rect.y,rect.width,rect.height);
+  context.drawImage(img,sourceRegion.x,sourceRegion.y,sourceRegion.width,sourceRegion.height,rect.x,rect.y,rect.width,rect.height);
   const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
   tex.anisotropy=Math.min(renderer!.capabilities.getMaxAnisotropy(),8);textures.push(tex);
   const printGeo=faces?faceGeometry(profile,area):wrapGeometry(profile,area);
@@ -81,7 +95,8 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
    let backMat=printMat;
    if(split){
     const backCanvas=document.createElement("canvas");backCanvas.width=canvas.width;backCanvas.height=canvas.height;
-    backCanvas.getContext("2d")!.drawImage(img,sourceWidth,0,sourceWidth,img.height,rect.x,rect.y,rect.width,rect.height);
+    const backRegion=regions[1];
+    backCanvas.getContext("2d")!.drawImage(img,backRegion.x,backRegion.y,backRegion.width,backRegion.height,rect.x,rect.y,rect.width,rect.height);
     const backTexture=new THREE.CanvasTexture(backCanvas);backTexture.colorSpace=THREE.SRGBColorSpace;backTexture.anisotropy=tex.anisotropy;textures.push(backTexture);
     backMat=printMat.clone();backMat.map=backTexture;
    }

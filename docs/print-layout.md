@@ -6,7 +6,7 @@ O modo logotipo agora oferece Pequeno, Médio e Grande, com Grande como padrão 
 
 O campo opcional `logoSize` fica no JSON existente do produto e é validado pela API. Os gabaritos completos preservam a escala e o posicionamento da versão anterior; o controle de tamanho só aparece no modo logotipo. Não há migração de dados ou alteração do arquivo de arte.
 
-O Silk frente e verso usa duas áreas independentes, com centros a 180°. O padrão para arquivos antigos e novos é repetir o mesmo logotipo nas duas faces. A imagem é ajustada proporcionalmente, preservando suas margens transparentes. A visualização inicia de frente, sem rotação automática, para permitir a leitura.
+O Silk frente e verso usa duas áreas independentes, com centros a 180°. O padrão para arquivos antigos e novos é repetir o mesmo logotipo nas duas faces. A imagem é ajustada proporcionalmente, desconsiderando margens totalmente transparentes apenas no enquadramento da logo. A visualização inicia de frente, sem rotação automática, para permitir a leitura.
 
 Na edição, “Gabarito completo” interpreta a metade esquerda do arquivo como a frente e a metade direita como o verso. As duas metades têm a mesma escala e são aplicadas em lados opostos; um lado vazio continua vazio. Enviar apenas a arte final, sem desenhos dos copos, cotas ou linhas de referência. PNG transparente preserva a cor do produto; fundos de JPG não são removidos automaticamente.
 
@@ -17,3 +17,13 @@ Cada um dos 18 modelos tem uma faixa vertical própria em `MODEL_PRINT_BANDS`, d
 A planilha “Planilha Layout 3D - Ecojoi (1).xlsx”, aba GABARITO, contém imagem identificada como 450 ML. B100:B110 informa área 235,8 × 138,5 mm, margens 3/3,5 mm, emenda 1,5 mm e faces a 180°. Essas medidas não foram atribuídas à taça gin nem a outros modelos: faltam seus gabaritos físicos. As áreas desses produtos continuam estimativas visuais, agora com aplicação legível. A distância entre centros informada de 119,4 mm não equivale exatamente à metade de 235,8 mm; confirmar com a produção antes de calibração dimensional.
 
 Não houve alteração dos modelos geométricos, autenticação, rotas, tabelas, arquivos de arte ou links existentes. `artMode` é um campo opcional no JSON do produto, validado pela API. Sem migração de banco. O componente de visualização é compartilhado pelo rascunho e apresentação pública.
+
+## Conferência dos PDFs de produção - 14/09/2026
+
+A Taça Prime no modo gabarito frente/verso reconhece a proporção 150 × 40 mm (tolerância de 0,4%) e usa duas regiões de 57,16 × 40 mm nas extremidades. O vão central de 35,68 mm fica fora das faces. Outras proporções mantêm a divisão em metades. Enviar a arte final sem contornos, cotas ou rótulos. Essas medidas descrevem o arquivo fornecido, não uma nova calibração do corpo 3D.
+
+Em modo logotipo, todos os produtos enquadram os pixels visíveis, excluindo somente margens de alfa zero. Pixels brancos, detalhes claros e semitransparentes são mantidos. Há um pixel de segurança na máscara, limitada a 4096 pixels no maior lado; os dados originais continuam intactos. Arquivos opacos, vazios e gabaritos completos mantêm suas margens. A repetição frente/verso usa exatamente o mesmo enquadramento. O ajuste Pequeno/Médio/Grande continua disponível.
+
+Referências dimensionais extraídas dos contornos dos PDFs: gin 308 × 35 mm; Long Drink 170 × 125 mm; Eco 600 área útil 222 × 132 mm e total 242 × 150 mm. Não foram convertidas automaticamente em medidas físicas nos corpos normalizados: falta confirmar escala, posicionamento e processo. USIJET 450/600 tem curvas e sangria próprias, e não pode ser interpretado como retângulo. Caneca sem capacidade, Eco 250, Garrafa Eco e Balde também aguardam equivalência/cotas. O fotolito descartável 400 é arte, não delimitador de área útil. O gabarito acrílico 500 não veio no RAR.
+
+Esta atualização não modifica banco, autenticação, usuários, modelos geométricos ou arquivos de arte. Ela muda o enquadramento exibido das logos com transparência e das folhas Prime reconhecidas, inclusive em links já existentes.
