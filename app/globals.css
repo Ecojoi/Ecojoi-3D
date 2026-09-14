@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../vendor/shadcn-tailwind-4.13.0.css";
+@import "./ecojoi-brand.css";
 
 .ecojoi-login{min-height:100dvh;background:linear-gradient(145deg,#f1f5f9,#eef0ff);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;color:#202938;gap:28px}
 .login-brand{display:flex;align-items:center;gap:12px}.login-brand strong{font-size:25px;letter-spacing:.03em}.login-brand strong span{display:block;font-size:14px;letter-spacing:.1em;font-weight:500;color:#64748b}

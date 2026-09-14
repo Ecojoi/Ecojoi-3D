@@ -1,0 +1,55 @@
+/* Brand-only overrides. Existing layouts, controls and product colors remain. */
+html:root {
+ --background:#f3f6f2;--foreground:#142d21;--primary:#176037;
+ --primary-foreground:#fff;--secondary:#f0f5ef;--muted:#f0f5ef;
+ --muted-foreground:#58665d;--accent:#e7f1e4;--accent-foreground:#164f2d;
+ --border:#dbe5d9;--input:#cbd9c9;--ring:#286b38;
+ --sidebar-accent:#e7f1e4;--sidebar-accent-foreground:#164f2d;
+ --sidebar-primary:#176037;--sidebar-ring:#286b38;
+}
+body .brand-icon{background:linear-gradient(135deg,#073422,#4a9843);box-shadow:inset 0 -3px #f4c815}
+body .brand{color:#073422}
+body .primary{background:#155b34;color:#fff;box-shadow:0 2px 5px #07342218}
+body .primary:hover{background:#0b4529;filter:none}
+body .primary:focus-visible{outline:3px solid #e6bb08;outline-offset:3px}
+body .topbar{border-top:3px solid #4a9843}
+body .avatar{background:#e7f1e4;color:#164f2d}
+body .table-card th,body .product-card-header{background:#f5f8f3}
+body .panel{border-color:#dbe5d9}
+body .save-state:not(.failed) svg,body .info svg{color:#26783b}
+body .requirements .done>span{background:#eaf4e7;border-color:#cbdcc5;color:#246c35}
+body .share-result{background:#f6faf3;border-color:#d2e2ca}
+body .badge.ativo{background:#eaf4e7;color:#215e31;border-color:#cbdcc5}
+body .upload-area:hover{border-color:#4a9843;background:#f3f8ef}
+body .presentation{background:#f3f6f2}
+body .presentation-title .brand-icon{opacity:1}
+body .internal-banner{background:#e9f0e5;border-color:#dbe5d9;color:#50624f}
+body .internal-banner>div{color:#234f30}
+body .product-tabs{background:#e4ece0}
+body .ecojoi-login{
+ background:#f3f6f2;color:#142d21;display:grid;
+ grid-template-columns:minmax(0,590px) minmax(0,430px);
+ gap:24px 54px;align-content:center;align-items:center;justify-content:center;
+ padding:48px 32px;position:relative;isolation:isolate;
+}
+body .ecojoi-login::before{
+ content:"";position:absolute;inset:0 0 auto;height:7px;
+ background:linear-gradient(90deg,#073422 0 33%,#4a9843 33% 83%,#f4c815 83%);
+}
+body .login-brand{display:flex;flex-direction:column;gap:22px;min-width:0}
+body .login-identity{display:block;width:100%;height:auto;max-width:590px;border-radius:16px}
+body .login-brand .login-studio-title{font-size:18px;letter-spacing:.12em;color:#164f2d;font-weight:500}
+body .login-card{border-color:#dbe5d9;box-shadow:0 16px 44px #123f2310;border-top:4px solid #4a9843;max-width:430px}
+body .login-symbol{background:#eaf4e7;color:#246c35}
+body .login-card>a{color:#215e31}
+body .ecojoi-login>footer{grid-column:1/-1;text-align:center;color:#58665d}
+@media(max-width:850px){
+ body .ecojoi-login{grid-template-columns:minmax(0,430px);padding:28px 20px;gap:22px}
+ body .login-brand{gap:12px}
+ body .login-identity{width:min(100%,310px);border-radius:12px}
+ body .login-brand .login-studio-title{font-size:15px}
+}
+@media(max-width:480px){
+ body .ecojoi-login{padding:24px 16px;gap:18px}
+ body .login-identity{width:240px;max-width:100%}
+}
