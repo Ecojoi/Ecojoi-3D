@@ -1,5 +1,16 @@
 # Aplicação da arte
 
+## Alinhamento com o Catálogo ECOJOI 2026 - 16/09/2026
+
+O seletor do Studio 3D passa a usar os 18 recipientes apresentados no Catálogo ECOJOI 2026: Copo Eco 250 ml com Tampa Bucks, Copo Eco 250 ml, Copo Eco 450 ml com Tampa Bucks, Copo Eco 450 ml, Copo Eco 600 ml, Garrafa Ecobio 500 ml, Taça Gin 550 ml, Taça Prime 170 ml, Copo Long Drink 330 ml, Caneca Chopp 500 ml, Copo Twister 500 ml, Copo Visual Drink 500 ml e descartáveis de 110, 200, 330, 440, 550 e 770 ml.
+
+Os perfis 3D foram refeitos a partir das medidas e das silhuetas publicadas no catálogo. A Garrafa Ecobio deixou de usar o corpo genérico da antiga "Garrafa Water Bio" e ganhou corpo reto, tampa escura, bico e aba superior. Os Copos Eco com Tampa Bucks também ganharam tampa própria. Os nomes antigos continuam apenas como compatibilidade para previews já salvos e não aparecem na criação de novos produtos.
+
+As cotas do catálogo foram usadas diretamente onde estão disponíveis. Para Twister e Visual Drink, a referência visual informa 9 cm de boca, 14,60 cm de altura e 6,3 cm de base. Os descartáveis de 110 e 200 ml usam as cotas publicadas. O catálogo lista 330, 440, 550 e 770 ml sem cotas completas; por isso esses quatro corpos usam uma progressão visual provisória e devem ser recalibrados quando a produção fornecer altura e diâmetros.
+
+Ecobag e Tirante aparecem no catálogo, mas não foram inseridos no seletor cilíndrico deste Studio porque exigem geometria e mapeamento próprios para tecido/fita. Forçá-los no mesmo gerador de copos produziria uma simulação incorreta.
+
+
 ## Tamanho do logotipo
 
 O modo logotipo agora oferece Pequeno, Médio e Grande, com Grande como padrão para produtos sem tamanho salvo. A largura máxima da face aumentou de 1,4 para 1,9 vezes o menor raio da faixa imprimível, ainda abaixo do diâmetro para manter a malha sobre a superfície. A margem interna passou de 6% para 2,5%. Em artes limitadas pela largura, isso aumenta o desenho em aproximadamente 47%, sem alterar a proporção nem recortar o arquivo. Pequeno usa 65% e Médio 82% do tamanho Grande. Artes limitadas pela altura continuam dentro da faixa útil.
