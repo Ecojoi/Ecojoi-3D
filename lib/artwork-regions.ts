@@ -17,7 +17,7 @@ export function templateFaces(model:string,width:number,height:number):[ArtworkR
  // Prime's supplied sheet is 150 x 40 mm, with two 57.16 x 40 mm
  // panels at its outer edges. The central 35.68 mm is not artwork.
  // Other aspect ratios keep the established equal-half convention.
- const prime=model.toUpperCase()==="TAÇA PRIME"&&Math.abs(width/height-150/40)<.015;
+ const prime=["TAÇA PRIME","TAÇA PRIME 170 ML"].includes(model.toUpperCase())&&Math.abs(width/height-150/40)<.015;
  const faceWidth=prime?width*57.16/150:width/2;
  return [{x:0,y:0,width:faceWidth,height},{x:width-faceWidth,y:0,width:faceWidth,height}];
 }
