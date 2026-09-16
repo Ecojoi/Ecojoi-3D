@@ -17,6 +17,25 @@ export const CUP_450_TEMPLATE={width:235.8,height:138.5,top:3,bottom:3.5,seam:1.
 // Individually reviewed safe bands on the existing normalized models, not mm.
 // Keep bottle shoulders, stems, feet, rims and handle attachments unprinted.
 export const MODEL_PRINT_BANDS:Record<string,{bottom:number;top:number}>={
+ "COPO ECO 250 ML COM TAMPA BUCKS":{bottom:.12,top:.92},
+ "COPO ECO 250 ML":{bottom:.12,top:.92},
+ "COPO ECO 450 ML COM TAMPA BUCKS":{bottom:.10,top:.94},
+ "COPO ECO 450 ML":{bottom:.10,top:.94},
+ "COPO ECO 600 ML":{bottom:.10,top:.94},
+ "GARRAFA ECOBIO 500 ML":{bottom:.08,top:.88},
+ "TAÇA GIN 550 ML":{bottom:.48,top:.90},
+ "TAÇA PRIME 170 ML":{bottom:.50,top:.90},
+ "COPO LONG DRINK 330 ML":{bottom:.10,top:.92},
+ "CANECA CHOPP 500 ML":{bottom:.12,top:.88},
+ "COPO TWISTER 500 ML":{bottom:.10,top:.92},
+ "COPO VISUAL DRINK 500 ML":{bottom:.10,top:.92},
+ "COPO DESCARTÁVEL 110 ML":{bottom:.12,top:.88},
+ "COPO DESCARTÁVEL 200 ML":{bottom:.12,top:.88},
+ "COPO DESCARTÁVEL 330 ML":{bottom:.10,top:.90},
+ "COPO DESCARTÁVEL 440 ML":{bottom:.10,top:.90},
+ "COPO DESCARTÁVEL 550 ML":{bottom:.10,top:.90},
+ "COPO DESCARTÁVEL 770 ML":{bottom:.10,top:.90},
+ // Compatibilidade com designs legados.
  "COPO ECOLOGIC 300 ML":{bottom:.14,top:.91},
  "COPO ECOLOGIC 400 ML":{bottom:.13,top:.92},
  "COPO ECOLOGIC 500 ML":{bottom:.12,top:.92},
