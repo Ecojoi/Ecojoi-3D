@@ -22,7 +22,7 @@ async function api<T>(path:string,method="GET",data?:unknown):Promise<T>{const r
 const editUrl=(id:string)=>`/designer/previews/${id}/edit`;
 const viewUrl=(id:string)=>`/designer/previews/${id}/view`;
 const shareUrl=(token:string)=>`${location.origin}/p/${token}`;
-const signature=(d:Design)=>JSON.stringify([d.name,d.products]);
+const signature=(d:Design)=>JSON.stringify([d.name,d.products.map(p=>[p.id,p.print,p.model,p.color,p.art?.id??null,p.artMode??null,p.logoSize??null])]);
 function Pick({label,value,onChange,items,disabled=false}:{label:string;value:string;onChange:(v:string)=>void;items:readonly string[];disabled?:boolean}){return <label className="field">{label}<Select value={value} onValueChange={onChange} disabled={disabled}><SelectTrigger aria-label={label}><SelectValue placeholder="Selecione"/></SelectTrigger><SelectContent position="popper">{items.map(i=><SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent></Select></label>;}
 function Brand(){return <a className="brand" href="/"><span className="brand-icon"><Box size={20}/></span><strong>ECOJOI<span>studio 3D</span></strong></a>;}
 function StateBadge({design}:{design:Design}){return <span className={`badge ${status(design).toLowerCase()}`}>{status(design)}</span>;}
