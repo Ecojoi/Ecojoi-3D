@@ -1,6 +1,7 @@
 import source from './reference-catalog.json';
 export const PRINTS = ["DIGITAL 360", "SILK 360", "SILK FRENTE", "SILK FRENTE E VERSO"] as const;
 export const MODELS=source.palettes.map(p=>p.model).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+export const LEGACY_MODELS=["COPO ECOLOGIC 300 ML","COPO ECOLOGIC 400 ML","COPO ECOLOGIC 500 ML","COPO ECOLOGIC 600 ML","COPO WHISKY","GARRAFA WATER BIO","LONG DRINK","SHOT","TAÇA DE GIN","TAÇA DE VINHO 400 ML","Taça Premium 2.0","TAÇA PRIME","TULIPA","TWISTER 600 ML","USUAL DRINK 400 ML","BALDE ECOLOGIC 5 L","CANECA DE CHOPP 300 ML","CANECA DE CHOPP 500 ML"] as const;
 export function modelsFor(print:string){return MODELS.filter(m=>source.palettes.find(p=>p.model===m)?.prints.includes(print));}
 export function colorsFor(print:string,model:string){const p=source.palettes.find(p=>p.model===model&&p.prints.includes(print));return p?p.indices.map(i=>source.names[i]):[];}
 export function colorMaterial(name:string){
