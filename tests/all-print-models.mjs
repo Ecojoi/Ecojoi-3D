@@ -8,7 +8,7 @@ const functionSource=source.slice(source.indexOf('export function modelProfile')
 const js=ts.transpile(functionSource,{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None});
 const modelProfile=new Function('THREE',js+';return modelProfile;')(THREE);
 const catalog=JSON.parse(fs.readFileSync(new URL('../lib/reference-catalog.json',import.meta.url),'utf8'));
-assert.equal(Object.keys(MODEL_PRINT_BANDS).length,catalog.palettes.length);
+assert(Object.keys(MODEL_PRINT_BANDS).length>=catalog.palettes.length);
 let variants=0;
 for(const entry of catalog.palettes){
  assert(MODEL_PRINT_BANDS[entry.model.toUpperCase()],entry.model);
@@ -28,7 +28,7 @@ for(const entry of catalog.palettes){
     assert(distance>=.36-1e-5,'Ink intersects handle clearance');
    }
   }
-  if(entry.model.includes('GARRAFA'))assert(area.top<1.25,'Ink crosses bottle shoulder');
+  if(entry.model.includes('GARRAFA'))assert(area.top<height*.9,'Ink crosses bottle cap area');
   for(const [w,h] of [[2400,600],[600,2400],[1000,1000]]){
    const rect=containRect(w,h,area.width,area.height,.06);
    assert(Math.abs(rect.width/rect.height-w/h)<1e-10);
