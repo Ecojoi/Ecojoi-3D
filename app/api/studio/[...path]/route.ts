@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { getEcojoiUser,isEcojoiAdmin } from "@/app/ecojoi-auth";
-import { COLORS,MODELS,LEGACY_MODELS,PRINTS,colorsFor,requirements,type Design,type Product } from "@/lib/catalog";
+import { COLORS,MODELS,PRINTS,colorsFor,requirements,type Design,type Product } from "@/lib/catalog";
 const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket};
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
 class HttpError extends Error {constructor(public status:number,message:string){super(message);}}
@@ -11,7 +11,7 @@ async function owned(id:string,owner:string){const r=await bindings().DB.prepare
 async function body(req:Request){if(Number(req.headers.get("content-length")||0)>150000)fail(413,"Dados muito grandes.");const text=await req.text();if(text.length>150000)fail(413,"Dados muito grandes.");try{return JSON.parse(text);}catch{fail(400,"Dados inválidos.");}}
 function validateProducts(value:unknown):Product[]{
  if(!Array.isArray(value)||value.length>5)fail(400,"Configure no máximo 5 produtos.");
- const seen=new Set();return (value as Product[]).map(p=>{if(!p||typeof p.id!=="string"||!/^[-a-zA-Z0-9]{1,80}$/.test(p.id)||seen.has(p.id))fail(400,"Produto inválido.");seen.add(p.id);const current=(MODELS as readonly string[]).includes(p.model),legacy=(LEGACY_MODELS as readonly string[]).includes(p.model);if(!(PRINTS as readonly string[]).includes(p.print)||(!current&&!legacy)||(current?!colorsFor(p.print,p.model).includes(p.color):(typeof p.color!=="string"||p.color.length<1||p.color.length>100)))fail(400,"Configuração de produto inválida.");if(p.art && (typeof p.art.id!=="string"||!/^[-a-zA-Z0-9]{1,80}$/.test(p.art.id)))fail(400,"Arte inválida.");if(p.artMode!==undefined&&p.artMode!=="logo"&&p.artMode!=="template")fail(400,"Aplicação da arte inválida.");if(p.logoSize!==undefined&&!(["small","medium","large"] as const).includes(p.logoSize))fail(400,"Tamanho da arte inválido.");return {...(p.logoSize?{logoSize:p.logoSize}:{}),...(p.artMode?{artMode:p.artMode}:{}),id:p.id,print:p.print,model:p.model,color:p.color,art:p.art?{id:p.art.id,name:"",type:"",size:0}:null};});
+ const seen=new Set();return (value as Product[]).map(p=>{if(!p||typeof p.id!=="string"||!/^[-a-zA-Z0-9]{1,80}$/.test(p.id)||seen.has(p.id))fail(400,"Produto inválido.");seen.add(p.id);if(!(PRINTS as readonly string[]).includes(p.print)||!(MODELS as readonly string[]).includes(p.model)||!colorsFor(p.print,p.model).includes(p.color))fail(400,"Configuração de produto inválida.");if(p.art && (typeof p.art.id!=="string"||!/^[-a-zA-Z0-9]{1,80}$/.test(p.art.id)))fail(400,"Arte inválida.");if(p.artMode!==undefined&&p.artMode!=="logo"&&p.artMode!=="template")fail(400,"Aplicação da arte inválida.");if(p.logoSize!==undefined&&!(["small","medium","large"] as const).includes(p.logoSize))fail(400,"Tamanho da arte inválido.");return {...(p.logoSize?{logoSize:p.logoSize}:{}),...(p.artMode?{artMode:p.artMode}:{}),id:p.id,print:p.print,model:p.model,color:p.color,art:p.art?{id:p.art.id,name:"",type:"",size:0}:null};});
 }
 async function route(req:Request,ctx:{params:Promise<{path:string[]}>}){
  try{

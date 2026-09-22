@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export type PrintProfile = {points:[number,number][];printMin:number;twist?:boolean;handle?:boolean};
+export type PrintProfile = {points:[number,number][];printMin:number;twist?:boolean;handle?:boolean;band?:{bottom:number;top:number};flat?:{width:number;depth:number};ellipse?:number;bag?:boolean;lid?:"bucks"|"bottle";fullHeight?:number;ridges?:boolean};
 
 export function radiusAt(profile:PrintProfile,y:number){
  for(let i=1;i<profile.points.length;i++){
@@ -17,25 +17,6 @@ export const CUP_450_TEMPLATE={width:235.8,height:138.5,top:3,bottom:3.5,seam:1.
 // Individually reviewed safe bands on the existing normalized models, not mm.
 // Keep bottle shoulders, stems, feet, rims and handle attachments unprinted.
 export const MODEL_PRINT_BANDS:Record<string,{bottom:number;top:number}>={
- "COPO ECO 250 ML COM TAMPA BUCKS":{bottom:.12,top:.92},
- "COPO ECO 250 ML":{bottom:.12,top:.92},
- "COPO ECO 450 ML COM TAMPA BUCKS":{bottom:.10,top:.94},
- "COPO ECO 450 ML":{bottom:.10,top:.94},
- "COPO ECO 600 ML":{bottom:.10,top:.94},
- "GARRAFA ECOBIO 500 ML":{bottom:.08,top:.88},
- "TAÇA GIN 550 ML":{bottom:.48,top:.90},
- "TAÇA PRIME 170 ML":{bottom:.50,top:.90},
- "COPO LONG DRINK 330 ML":{bottom:.10,top:.92},
- "CANECA CHOPP 500 ML":{bottom:.12,top:.88},
- "COPO TWISTER 500 ML":{bottom:.10,top:.92},
- "COPO VISUAL DRINK 500 ML":{bottom:.10,top:.92},
- "COPO DESCARTÁVEL 110 ML":{bottom:.12,top:.88},
- "COPO DESCARTÁVEL 200 ML":{bottom:.12,top:.88},
- "COPO DESCARTÁVEL 330 ML":{bottom:.10,top:.90},
- "COPO DESCARTÁVEL 440 ML":{bottom:.10,top:.90},
- "COPO DESCARTÁVEL 550 ML":{bottom:.10,top:.90},
- "COPO DESCARTÁVEL 770 ML":{bottom:.10,top:.90},
- // Compatibilidade com designs legados.
  "COPO ECOLOGIC 300 ML":{bottom:.14,top:.91},
  "COPO ECOLOGIC 400 ML":{bottom:.13,top:.92},
  "COPO ECOLOGIC 500 ML":{bottom:.12,top:.92},
@@ -58,7 +39,7 @@ export const MODEL_PRINT_BANDS:Record<string,{bottom:number;top:number}>={
 
 export function printArea(profile:PrintProfile,model:string,faces:boolean){
  const height=profile.points.at(-1)![1];
- const band=MODEL_PRINT_BANDS[model.toUpperCase()];
+ const band=profile.band??MODEL_PRINT_BANDS[model.toUpperCase()];
  const bottom=band?height*band.bottom:profile.printMin+(height-profile.printMin)*.07;
  const top=height*(band?.top??.93);
  const minRadius=Math.min(...Array.from({length:65},(_,i)=>radiusAt(profile,bottom+(top-bottom)*i/64)));
@@ -66,7 +47,7 @@ export function printArea(profile:PrintProfile,model:string,faces:boolean){
  const gap=profile.handle?.72:.06;
  const sweep=2*Math.PI-gap;
  const start=profile.handle?Math.PI/2+gap/2:Math.PI+gap/2;
- return {bottom,top,width:faces?minRadius*1.9:sweep*radius,height:top-bottom,start,sweep};
+ return {bottom,top,width:profile.flat?profile.flat.width:faces?minRadius*1.9:sweep*radius,height:top-bottom,start,sweep};
 }
 
 export function containRect(imageWidth:number,imageHeight:number,width:number,height:number,padding=0){
@@ -83,7 +64,7 @@ export function faceGeometry(profile:PrintProfile,area:ReturnType<typeof printAr
  for(let i=0;i<pos.count;i++){
   const x=pos.getX(i),y=pos.getY(i)+(area.bottom+area.top)/2;
   const r=radiusAt(profile,y)+.003;
-  let z=Math.sqrt(Math.max(0,r*r-x*x)),px=x;
+  let z=profile.flat?profile.flat.depth+.002:Math.sqrt(Math.max(0,r*r-x*x))*(profile.ellipse??1),px=x;
   if(profile.twist){const s=1+.03*Math.sin(Math.atan2(z,x)*12+y*2);px*=s;z*=s;}
   pos.setXYZ(i,px,y,z);
  }
@@ -91,12 +72,14 @@ export function faceGeometry(profile:PrintProfile,area:ReturnType<typeof printAr
 }
 
 export function wrapGeometry(profile:PrintProfile,area:ReturnType<typeof printArea>){
+ if(profile.flat)return faceGeometry(profile,area);
  const points=Array.from({length:129},(_,i)=>{
   const y=area.bottom+(area.top-area.bottom)*i/128;
   return new THREE.Vector2(radiusAt(profile,y)+.003,y);
  });
  // The middle of the uploaded sheet faces the initial camera. Seam stays behind.
  const geo=new THREE.LatheGeometry(points,192,area.start,area.sweep);
+ if(profile.ellipse)geo.scale(1,1,profile.ellipse);
  const pos=geo.attributes.position;
  if(profile.twist){for(let i=0;i<pos.count;i++){
   const x=pos.getX(i),z=pos.getZ(i),y=pos.getY(i),s=1+.03*Math.sin(Math.atan2(z,x)*12+y*2);

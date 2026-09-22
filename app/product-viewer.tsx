@@ -2,58 +2,36 @@
 import {useEffect,useRef,useState} from "react";
 import {Maximize,Minimize,RotateCcw,Rotate3D} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {COLORS,colorMaterial,type Product} from "@/lib/catalog";
+import {COLORS,type Product} from "@/lib/catalog";
 import * as THREE from "three";
 import {printArea,containRect,faceGeometry,wrapGeometry} from "@/lib/print-layout";
+import {catalogueProfile,catalogueBody,addCatalogueDetails} from "@/lib/catalogue-geometry";
+import type {PrintProfile} from "@/lib/print-layout";
 import {alphaBounds,templateFaces} from "@/lib/artwork-regions";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 
-type Profile={points:[number,number][];printMin:number;handle?:boolean;twist?:boolean;visualHeight?:number;lid?:"bucks"|"ecobio";disposable?:boolean};
-// Perfis visuais derivados das proporções e medidas publicadas no Catálogo ECOJOI 2026.
-// Os descartáveis 330/440/550/770 não têm cotas completas no catálogo; nesses quatro,
-// a progressão dimensional é apenas visual até a produção fornecer as medidas.
-export function modelProfile(name:string):Profile { name=name.toUpperCase();
- const cup=(bottomRadius:number,topRadius:number,height:number,extra:Partial<Profile>={}):Profile=>({points:[[.02,0],[Math.max(.02,bottomRadius-.025),.018],[bottomRadius,.055],[bottomRadius+.01,height*.12],[topRadius-.025,height*.84],[topRadius,height*.97],[topRadius+.006,height]],printMin:height*.08,...extra});
- switch(name){
-  case "COPO ECO 250 ML COM TAMPA BUCKS":return cup(.30,.38,.83,{visualHeight:.95,lid:"bucks"});
-  case "COPO ECO 250 ML":return cup(.30,.38,.83);
-  case "COPO ECO 450 ML COM TAMPA BUCKS":return cup(.27,.38,1.45,{visualHeight:1.57,lid:"bucks"});
-  case "COPO ECO 450 ML":return cup(.27,.38,1.45);
-  case "COPO ECO 600 ML":return cup(.315,.42,1.54);
-  case "GARRAFA ECOBIO 500 ML":return {points:[[.02,0],[.285,.02],[.30,.06],[.30,.18],[.305,1.62],[.31,1.74]],printMin:.12,visualHeight:2,lid:"ecobio"};
-  case "COPO LONG DRINK 330 ML":return cup(.315,.325,1.08);
-  case "CANECA CHOPP 500 ML":return {points:[[.02,0],[.39,.018],[.42,.07],[.43,1.03],[.435,1.08]],printMin:.12,handle:true};
-  case "COPO TWISTER 500 ML":return cup(.315,.45,1.46);
-  case "COPO VISUAL DRINK 500 ML":return {points:[[.02,0],[.305,.018],[.315,.06],[.34,.35],[.405,1.12],[.45,1.43],[.452,1.46]],printMin:.12};
-  case "COPO DESCARTÁVEL 110 ML":return cup(.23,.31,.60,{disposable:true});
-  case "COPO DESCARTÁVEL 200 ML":return cup(.25,.365,.78,{disposable:true});
-  case "COPO DESCARTÁVEL 330 ML":return cup(.285,.395,.95,{disposable:true});
-  case "COPO DESCARTÁVEL 440 ML":return cup(.30,.425,1.08,{disposable:true});
-  case "COPO DESCARTÁVEL 550 ML":return cup(.315,.455,1.22,{disposable:true});
-  case "COPO DESCARTÁVEL 770 ML":return cup(.34,.49,1.40,{disposable:true});
-  case "TAÇA GIN 550 ML":{
-   const lower=new THREE.CubicBezierCurve(new THREE.Vector2(.055,.62),new THREE.Vector2(.08,.78),new THREE.Vector2(.50,.88),new THREE.Vector2(.50,1.28));
-   const upper=new THREE.CubicBezierCurve(new THREE.Vector2(.50,1.28),new THREE.Vector2(.50,1.58),new THREE.Vector2(.48,1.82),new THREE.Vector2(.50,2.0));
-   const bowl=[...lower.getPoints(64),...upper.getPoints(64).slice(1)].map(p=>[p.x,p.y] as [number,number]);
-   return {points:[[.02,0],[.34,.02],[.36,.045],[.32,.075],[.055,.10],[.05,.58],...bowl],printMin:.78};
-  }
-  case "TAÇA PRIME 170 ML":{
-   const bowl=new THREE.CubicBezierCurve(new THREE.Vector2(.065,.92),new THREE.Vector2(.16,1.02),new THREE.Vector2(.27,1.55),new THREE.Vector2(.29,2.165)).getPoints(96).map(p=>[p.x,p.y] as [number,number]);
-   return {points:[[.02,0],[.30,.02],[.32,.045],[.28,.075],[.045,.10],[.045,.86],...bowl],printMin:1.08};
-  }
- }
- // Compatibilidade visual para designs antigos já salvos antes do catálogo 2026.
+type Profile=PrintProfile;
+// Preliminary normalized profiles. Replace with measured production profiles after validation.
+export function modelProfile(name:string):Profile { const active=catalogueProfile(name);if(active)return active;name=name.toUpperCase();
  if(name.includes("TAÇA")||name==="TULIPA"){
-  const gin=name.includes("GIN");
-  return {points:[[.02,0],[.39,.02],[.41,.045],[.37,.07],[.045,.09],[.04,.57],[.09,.61],[.23,.66],[gin?.48:.36,.82],[gin?.56:.45,1.05],[gin?.54:.44,1.27],[.43,1.54]],printMin:.68};
+  if(name==="TULIPA")return {points:[[.1,0],[.31,.025],[.32,.06],[.26,.15],[.23,.27],[.28,.55],[.41,.92],[.42,1.32],[.38,1.55]],printMin:.25};
+  const gin=name.includes("GIN"),wine=name.includes("VINHO");
+  if(gin){
+   // Smooth bowl with a shared vertical tangent at its widest point. Both the
+   // body and the artwork below use these same samples; dimensions remain approximate.
+   const lower=new THREE.CubicBezierCurve(new THREE.Vector2(.04,.57),new THREE.Vector2(.04,.72),new THREE.Vector2(.56,.69),new THREE.Vector2(.56,1.05));
+   const upper=new THREE.CubicBezierCurve(new THREE.Vector2(.56,1.05),new THREE.Vector2(.56,1.25),new THREE.Vector2(.49,1.42),new THREE.Vector2(.43,1.54));
+   const bowl=[...lower.getPoints(64),...upper.getPoints(64).slice(1)].map(p=>[p.x,p.y] as [number,number]);
+   return {points:[[.02,0],[.39,.02],[.41,.045],[.37,.07],[.045,.09],...bowl],printMin:.68};
+  }
+  return {points:[[.02,0],[.39,.02],[.41,.045],[.37,.07],[.045,.09],[.04,.57],[.09,.61],[.23,.66],[gin?.48:.36,.82],[gin?.56: .45,1.05],[gin?.54: .44,1.27],[wine?.3:.43,1.54]],printMin:.68};
  }
- if(name.includes("BALDE"))return {points:[[.02,0],[.62,.02],[.65,.08],[.84,1.2],[.87,1.23],[.86,1.26]],printMin:.1};
- if(name.includes("GARRAFA"))return {points:[[.02,0],[.3,.025],[.34,.07],[.35,1.25],[.32,1.4],[.17,1.57],[.16,1.8],[.18,1.81]],printMin:.08};
- if(name.includes("CANECA"))return {points:[[.02,0],[.34,.015],[.38,.08],[.39,1.3],[.41,1.33]],printMin:.09,handle:true};
+ if(name.includes("BALDE"))return {points:[[.02,0],[.62,.02],[.65,.08],[.84,1.2],[.87,1.23],[.86,1.26]],printMin:.1}; if(name.includes("GARRAFA"))return {points:[[.02,0],[.3,.025],[.34,.07],[.35,1.25],[.32,1.4],[.17,1.57],[.16,1.8],[.18,1.81]],printMin:.08};
+ if(name.includes("CANECA")){const big=name.includes("500");return {points:[[.02,0],[.34,.015],[.38,.08],[.39,big?1.3:1.05],[.41,big?1.33:1.08]],printMin:.09,handle:true};}
  if(name==="SHOT")return {points:[[.02,0],[.23,.015],[.24,.08],[.3,.66],[.315,.68]],printMin:.08};
  if(name.includes("WHISKY"))return {points:[[.02,0],[.39,.02],[.4,.09],[.43,.85],[.445,.88]],printMin:.08};
- const h=name.includes("300")?1.12:name.includes("600")?1.72:name.includes("500")?1.55:name.includes("LONG DRINK")?1.65:1.35;
+ const h=name.includes("300")?1.12:name.includes("600")?1.72:name.includes("500")?1.55:name==="LONG DRINK"?1.65:1.35;
  return {points:[[.02,0],[.28,.018],[.3,.04],[.305,.1],[.34,h*.4],[.39,h*.82],[.405,h-.03],[.42,h],[.415,h+.025]],printMin:.09,twist:name.includes("TWISTER")};
 }
 export default function ProductViewer({product,token}:{product:Product;token?:string}){
@@ -61,35 +39,22 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  useEffect(()=>{const el=host.current;if(!el)return;let disposed=false,renderer:THREE.WebGLRenderer|undefined,controls:OrbitControls|undefined,observer:ResizeObserver|undefined,frame=0,environment:THREE.WebGLRenderTarget|undefined;const textures:THREE.Texture[]=[];const scene=new THREE.Scene();setError("");setLoading(true);
  try{
  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0xffffff);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;el.replaceChildren(renderer.domElement);renderer.domElement.setAttribute("aria-label","Modelo 3D interativo. Arraste para girar; use a roda do mouse para ampliar.");
- const camera=new THREE.PerspectiveCamera(32,1,.01,100);const profile=modelProfile(product.model),bodyHeight=profile.points.at(-1)![1],height=profile.visualHeight??bodyHeight;
+ const camera=new THREE.PerspectiveCamera(32,1,.01,100);const profile=modelProfile(product.model),height=profile.fullHeight??(profile.bag?profile.points.at(-1)![1]*1.3:profile.points.at(-1)![1]);
  camera.position.set(0,height*.75,height*3.7);controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,height*.49,0);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=height*1.8;controls.maxDistance=height*7;controls.maxPolarAngle=Math.PI*.88;controls.autoRotate=false;controls.autoRotateSpeed=.6;controls.addEventListener("start",()=>{if(controls)controls.autoRotate=false;});reset.current=()=>{camera.position.set(0,height*.75,height*3.7);controls?.target.set(0,height*.49,0);if(controls)controls.autoRotate=false;};
  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();environment=pmrem.fromScene(room,.04);scene.environment=environment.texture;room.dispose();pmrem.dispose();scene.add(new THREE.HemisphereLight(0xffffff,0xa6b0c2,2));
  const light=new THREE.DirectionalLight(0xffffff,4);light.position.set(-3,5,4);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.camera.left=-3;light.shadow.camera.right=3;light.shadow.camera.top=3;light.shadow.camera.bottom=-3;light.shadow.normalBias=.03;scene.add(light);
  const fill=new THREE.DirectionalLight(0xe5eeff,2);fill.position.set(3,2,-2);scene.add(fill);
- const col=COLORS.find(c=>c.name===product.color)||colorMaterial(product.color);const mat=new THREE.MeshPhysicalMaterial({color:col.hex,roughness:col.frosted?.66:col.opacity===1?.22:.12,metalness:col.metallic?.45:0,clearcoat:.8,clearcoatRoughness:.13,transmission:col.opacity===1?0:1-col.opacity,thickness:.055,ior:1.46,side:THREE.DoubleSide});
- const outer=profile.points.map(([r,y])=>new THREE.Vector2(r,y));const inner=profile.points.slice(1).reverse().map(([r,y])=>new THREE.Vector2(Math.max(.01,r-.018),Math.max(.03,y)));const geo=new THREE.LatheGeometry([...outer,...inner,new THREE.Vector2(.01,.035)],128);
+ const col=COLORS.find(c=>c.name===product.color)||COLORS[2];const mat=new THREE.MeshPhysicalMaterial({color:col.hex,roughness:col.frosted?.66:col.opacity===1?.22:.12,metalness:col.metallic?.45:0,clearcoat:.8,clearcoatRoughness:.13,transmission:col.opacity===1?0:1-col.opacity,thickness:.055,ior:1.46,side:THREE.DoubleSide});
+ const outer=profile.points.map(([r,y])=>new THREE.Vector2(r,y));const inner=profile.points.slice(1).reverse().map(([r,y])=>new THREE.Vector2(Math.max(.01,r-.018),Math.max(.03,y)));const geo=catalogueProfile(product.model)?catalogueBody(profile):new THREE.LatheGeometry([...outer,...inner,new THREE.Vector2(.01,.035)],128);
  if(profile.twist){const pos=geo.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),y=pos.getY(i),angle=Math.atan2(z,x),s=1+.03*Math.sin(angle*12+y*2);pos.setXYZ(i,x*s,y,z*s);}geo.computeVertexNormals();}
  if(col.gradient){const gc=document.createElement("canvas");gc.width=8;gc.height=256;const gctx=gc.getContext("2d")!;const g=gctx.createLinearGradient(0,0,0,256);g.addColorStop(0,"#fafcfd");g.addColorStop(.25,"#fafcfd");g.addColorStop(.8,col.hex);g.addColorStop(1,col.hex);gctx.fillStyle=g;gctx.fillRect(0,0,8,256);const gt=new THREE.CanvasTexture(gc);gt.colorSpace=THREE.SRGBColorSpace;textures.push(gt);mat.color.set(0xffffff);mat.map=gt;}const mesh=new THREE.Mesh(geo,mat);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);
- if(profile.lid){
-  const topRadius=profile.points.at(-1)![0];
-  const lidMat=new THREE.MeshPhysicalMaterial({color:profile.lid==="bucks"?0x34251e:0x16191c,roughness:.28,metalness:0,clearcoat:.35});
-  if(profile.lid==="bucks"){
-   const ring=new THREE.Mesh(new THREE.CylinderGeometry(topRadius*1.055,topRadius*1.055,.075,96),lidMat);ring.position.y=bodyHeight+.0375;ring.castShadow=true;scene.add(ring);
-   const top=new THREE.Mesh(new THREE.CylinderGeometry(topRadius*.96,topRadius*.99,.035,96),lidMat);top.position.y=bodyHeight+.092;top.castShadow=true;scene.add(top);
-  }else{
-   const cap=new THREE.Mesh(new THREE.CylinderGeometry(topRadius*1.13,topRadius*1.13,.12,96),lidMat);cap.position.y=bodyHeight+.06;cap.castShadow=true;scene.add(cap);
-   const neck=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.12,48),lidMat);neck.position.set(-.10,bodyHeight+.17,0);neck.castShadow=true;scene.add(neck);
-   const flap=new THREE.Mesh(new THREE.BoxGeometry(.34,.055,.27),lidMat);flap.position.set(.10,bodyHeight+.205,-.02);flap.rotation.z=-.34;flap.castShadow=true;scene.add(flap);
-   const hinge=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.30,32),lidMat);hinge.rotation.x=Math.PI/2;hinge.position.set(.20,bodyHeight+.145,0);scene.add(hinge);
-  }
- }
+ if(catalogueProfile(product.model))addCatalogueDetails(scene,profile,mat);
  if(profile.handle){const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(.36,height*.83,0),new THREE.Vector3(.74,height*.8,0),new THREE.Vector3(.78,height*.47,0),new THREE.Vector3(.68,height*.22,0),new THREE.Vector3(.36,height*.23,0)]);const handle=new THREE.Mesh(new THREE.TubeGeometry(curve,48,.045,12,false),mat);handle.castShadow=true;scene.add(handle);}
  const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({color:0x718099,opacity:.18}));floor.rotation.x=-Math.PI/2;floor.position.y=-.01;floor.receiveShadow=true;scene.add(floor);
  if(product.art){const source=`/api/studio/assets/${product.art.id}${token?`?token=${encodeURIComponent(token)}`:""}`;new THREE.TextureLoader().load(source,(raw)=>{
   if(disposed){raw.dispose();return;}textures.push(raw);
   const twoFaces=product.print==="SILK FRENTE E VERSO";
-  const frontOnly=product.print==="SILK FRENTE";
-  const faces=twoFaces||frontOnly||product.artMode!=="template";
+  const faces=twoFaces||["SILK","SILK FRENTE","PERSONALIZAÇÃO FRENTE"].includes(product.print)||!!profile.flat||product.artMode!=="template";
   const area=printArea(profile,product.model,faces);
   // Preserve the previously calibrated template width. Enlargement is for logos.
   if(twoFaces&&product.artMode==="template")area.width*=1.4/1.9;
@@ -99,6 +64,7 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
   const aspect=area.width/area.height;
   canvas.width=Math.min(4096,Math.max(512,Math.round(1536*aspect)));
   canvas.height=Math.round(canvas.width/aspect);
+  if(profile.flat){canvas.height=2048;canvas.width=Math.max(32,Math.round(2048*aspect));}
   const context=canvas.getContext("2d")!;
   const img=raw.image as HTMLImageElement;
   const split=twoFaces&&product.artMode==="template";

@@ -5,14 +5,14 @@ if(!/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin))throw Error('Tests ar
 let passed=0;const check=(description,fn)=>{fn();passed++;console.log('PASS '+description);};
 async function req(path,{method='GET',data,auth=true,headers={}}={}){const response=await fetch(origin+'/api/studio/'+path,{method,headers:{...(auth?{Cookie:process.env.STUDIO_TEST_COOKIE||''}:{}),...(data instanceof FormData?{}:{'Content-Type':'application/json'}),...headers},body:data===undefined?undefined:data instanceof FormData?data:JSON.stringify(data)});let result;try{result=await response.json();}catch{result=null;}return {status:response.status,data:result};}
 const ref=JSON.parse(readFileSync(new URL('../lib/reference-catalog.json',import.meta.url),'utf8'));
-check('Catálogo 2026: 18 modelos de recipientes, 37 cores, 40 pares modelo/impressão, 512 variantes',()=>{assert.equal(ref.palettes.length,18);assert.equal(ref.names.length,37);assert.equal(ref.palettes.reduce((n,p)=>n+p.prints.length,0),40);assert.equal(ref.palettes.reduce((n,p)=>n+p.prints.length*p.indices.length,0),512);});
-check('Catalog indices are valid and variants are unique',()=>{for(const p of ref.palettes){assert.equal(new Set(p.indices).size,p.indices.length);assert(p.indices.every(i=>i>=0&&i<ref.names.length));}});
+check('Observed catalog: 18 models, 70 colors, 48 model/print pairs, 989 variants',()=>{assert.equal(ref.palettes.length,18);assert.equal(ref.names.length,70);assert.equal(ref.palettes.reduce((n,p)=>n+p.prints.length,0),48);assert.equal(ref.palettes.reduce((n,p)=>n+p.prints.length*p.indices.length,0),989);});
+check('Catalog indices are valid and variants are unique',()=>{for(const p of ref.palettes){assert.equal(new Set(p.indices).size,p.indices.length);assert(p.indices.every(i=>i>=0&&i<70));}});
 let r=await req('designs',{auth:false});check('Anonymous user cannot list designs',()=>assert.equal(r.status,401));
 r=await req('designs',{method:'POST',data:{name:'wrong origin'},headers:{Origin:'https://untrusted.invalid'}});check('Cross-origin mutation blocked',()=>assert.equal(r.status,403));
 r=await req('designs',{method:'POST',data:{name:'TESTE LOCAL · validação de fluxo'}});check('Create draft persists',()=>assert.equal(r.status,201));let d=r.data;
 r=await req('designs/'+d.id+'/publish',{method:'POST',data:{version:d.version}});check('Incomplete design cannot publish',()=>assert.equal(r.status,400));
-const p={id:crypto.randomUUID(),print:'DIGITAL 360',model:'COPO ECO 450 ML',color:'BRANCO OPACO',art:null};
-r=await req('designs/'+d.id,{method:'PUT',data:{...d,products:[{...p,model:'COPO DESCARTÁVEL 110 ML'}]}});check('Invalid model/print pairing blocked server-side',()=>assert.equal(r.status,400));
+const p={id:crypto.randomUUID(),print:'DIGITAL 360',model:'COPO ECOLOGIC 400 ML',color:'BRANCO OPACO',art:null};
+r=await req('designs/'+d.id,{method:'PUT',data:{...d,products:[{...p,model:'BALDE ECOLOGIC 5 L'}]}});check('Invalid model/print pairing blocked server-side',()=>assert.equal(r.status,400));
 r=await req('designs/'+d.id,{method:'PUT',data:{...d,products:Array.from({length:6},()=>({...p,id:crypto.randomUUID()}))}});check('Maximum five products enforced',()=>assert.equal(r.status,400));
 r=await req('designs/'+d.id,{method:'PUT',data:{...d,products:[p]}});check('Save product persists',()=>assert.equal(r.status,200));const stale=d.version;d=r.data;
 r=await req('designs/'+d.id,{method:'PUT',data:{...d,version:stale,name:'stale'}});check('Concurrent stale save rejected',()=>assert.equal(r.status,409));

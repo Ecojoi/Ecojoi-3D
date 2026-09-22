@@ -1,14 +1,12 @@
 # Aplicação da arte
 
-## Alinhamento com o Catálogo ECOJOI 2026 - 16/09/2026
+## Catálogo confirmado em 22/09/2026
 
-O seletor do Studio 3D passa a usar os 18 recipientes apresentados no Catálogo ECOJOI 2026: Copo Eco 250 ml com Tampa Bucks, Copo Eco 250 ml, Copo Eco 450 ml com Tampa Bucks, Copo Eco 450 ml, Copo Eco 600 ml, Garrafa Ecobio 500 ml, Taça Gin 550 ml, Taça Prime 170 ml, Copo Long Drink 330 ml, Caneca Chopp 500 ml, Copo Twister 500 ml, Copo Visual Drink 500 ml e descartáveis de 110, 200, 330, 440, 550 e 770 ml.
+Fonte: Catálogo ECOJOI 2026_compressed.pdf, versão de 21 páginas confirmada pelo usuário. Agora são 21 opções, incluindo duas Ecobags, tirante e seis descartáveis. A lista nova usa `ecojoi-catalog.ts`; os catálogos anteriores permanecem como compatibilidade, sem migração dos designs. As escolhas antigas não aparecem em novos produtos. A integração anterior do GitHub (8b31dd6, 18 recipientes) também é aceita para reabrir seus produtos e cores.
 
-Os perfis 3D foram refeitos a partir das medidas e das silhuetas publicadas no catálogo. A Garrafa Ecobio deixou de usar o corpo genérico da antiga "Garrafa Water Bio" e ganhou corpo reto, tampa escura, bico e aba superior. Os Copos Eco com Tampa Bucks também ganharam tampa própria. Os nomes antigos continuam apenas como compatibilidade para previews já salvos e não aparecem na criação de novos produtos.
+As medidas, páginas e limitações estão junto dos produtos. Long Drink usa o desenho cotado (15 × 6,5 × 5 cm), que diverge da ficha textual da mesma página. Descartáveis de 330/440/550/770 ml não têm cotas e usam proporções aproximadas. Ecobags usam corpo elíptico com profundidade estimada; tirante mostra a fita aberta. Modelos são simulações, não moldes de fabricação.
 
-As cotas do catálogo foram usadas diretamente onde estão disponíveis. Para Twister e Visual Drink, a referência visual informa 9 cm de boca, 14,60 cm de altura e 6,3 cm de base. Os descartáveis de 110 e 200 ml usam as cotas publicadas. O catálogo lista 330, 440, 550 e 770 ml sem cotas completas; por isso esses quatro corpos usam uma progressão visual provisória e devem ser recalibrados quando a produção fornecer altura e diâmetros.
-
-Ecobag e Tirante aparecem no catálogo, mas não foram inseridos no seletor cilíndrico deste Studio porque exigem geometria e mapeamento próprios para tecido/fita. Forçá-los no mesmo gerador de copos produziria uma simulação incorreta.
+O salvamento compara campos editáveis em ordem fixa, ignorando a ordem dos campos JSON e metadados de arquivos retornados pelo servidor. O envio de arte persiste a associação antes de confirmar sucesso; pedidos têm prazo de 60 segundos e o diálogo de PDF permite tentar novamente após falha.
 
 
 ## Tamanho do logotipo
