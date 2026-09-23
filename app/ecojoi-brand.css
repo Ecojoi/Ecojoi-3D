@@ -53,3 +53,25 @@ body .ecojoi-login>footer{grid-column:1/-1;text-align:center;color:#58665d}
  body .ecojoi-login{padding:24px 16px;gap:18px}
  body .login-identity{width:240px;max-width:100%}
 }
+
+/* Live previews extend existing product cards and configuration dialog. */
+.product-live-preview{border-top:1px solid var(--border);padding:12px;background:#fff}
+.live-preview-heading{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px;margin:0 4px 8px;color:#214f37}
+.live-preview-heading span{font-size:11px;color:#718276}
+.product-live-preview .viewer-wrap{height:330px;border:1px solid #edf2ed;border-radius:10px}
+.product-form-preview>p{font-size:12px;color:#65786c;margin-bottom:6px}
+.product-form-preview .viewer-wrap{height:230px;border:1px solid #edf2ed;border-radius:10px}
+.product-form-preview .viewer-hint{font-size:10px;bottom:10px}
+.product-dialog{max-height:92dvh;overflow-y:auto}
+.product-live-preview .viewer-wrap:fullscreen,.product-form-preview .viewer-wrap:fullscreen{height:100dvh;width:100vw}
+@media(max-width:600px){.product-live-preview .viewer-wrap{height:290px}.live-preview-heading{align-items:flex-start;flex-direction:column;gap:2px}}
+
+@media(min-width:1100px){
+ .editor-workspace .product-card{overflow:clip}
+ .product-editor-content{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+ .product-editor-content>.art-zone{grid-column:1;grid-row:1;min-width:0}
+ .product-editor-content>.product-live-preview{grid-column:2;grid-row:1;position:sticky;top:12px;min-width:0}
+ .product-editor-content .live-preview-heading{align-items:flex-start;flex-direction:column;gap:2px}
+ .product-editor-content .viewer-hint{font-size:10px;padding:6px 8px;gap:4px;bottom:12px}
+ .product-editor-content .art-file{flex-wrap:wrap}
+}

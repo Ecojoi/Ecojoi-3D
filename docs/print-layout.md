@@ -36,3 +36,9 @@ Em modo logotipo, todos os produtos enquadram os pixels visíveis, excluindo som
 Referências dimensionais extraídas dos contornos dos PDFs: gin 308 × 35 mm; Long Drink 170 × 125 mm; Eco 600 área útil 222 × 132 mm e total 242 × 150 mm. Não foram convertidas automaticamente em medidas físicas nos corpos normalizados: falta confirmar escala, posicionamento e processo. USIJET 450/600 tem curvas e sangria próprias, e não pode ser interpretado como retângulo. Caneca sem capacidade, Eco 250, Garrafa Eco e Balde também aguardam equivalência/cotas. O fotolito descartável 400 é arte, não delimitador de área útil. O gabarito acrílico 500 não veio no RAR.
 
 Esta atualização não modifica banco, autenticação, usuários, modelos geométricos ou arquivos de arte. Ela muda o enquadramento exibido das logos com transparência e das folhas Prime reconhecidas, inclusive em links já existentes.
+
+## Prévia durante a edição
+
+Cada cartão de produto mostra o mesmo renderizador da apresentação, ligado aos campos em edição. Em telas largas, arte e prévia ficam lado a lado; em telas estreitas ficam empilhadas. O diálogo de configuração também mostra modelo e cor antes de salvar, sem persistir alterações canceladas. Rotação e zoom são mantidos para alterações no mesmo modelo. A renderização pausa fora da tela e libera recursos ao desmontar. Nenhum dado de design ou esquema de banco foi alterado.
+
+A curvatura inferior da Gin segue a silhueta arredondada da página 11. O diâmetro externo da tampa Bucks usa os 7,8 cm das páginas 4/6. Texturas, espessuras e detalhes sem cotas permanecem estimativas visuais, não especificações do molde físico.

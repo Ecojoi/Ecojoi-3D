@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export type PrintProfile = {points:[number,number][];printMin:number;twist?:boolean;handle?:boolean;band?:{bottom:number;top:number};flat?:{width:number;depth:number};ellipse?:number;bag?:boolean;lid?:"bucks"|"bottle";fullHeight?:number;ridges?:boolean};
+export type PrintProfile = {points:[number,number][];printMin:number;twist?:boolean;handle?:boolean;band?:{bottom:number;top:number};flat?:{width:number;depth:number};ellipse?:number;bag?:boolean;lid?:"bucks"|"bottle";fullHeight?:number;lidRadius?:number;ridges?:boolean};
 
 export function radiusAt(profile:PrintProfile,y:number){
  for(let i=1;i<profile.points.length;i++){
