@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import ts from 'typescript';
+const exports={};new Function('exports',ts.transpile(fs.readFileSync('lib/artwork-background.ts','utf8'),{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}))(exports);
+const {removeLightBackground}=exports;
+const pixels=new Uint8ClampedArray(5*5*4).fill(255);
+for(const n of [6,7,8,11,13,16,17,18])pixels.set([12,24,36,255],n*4);
+const original=new Uint8ClampedArray(pixels);
+const edge=removeLightBackground(pixels,5,5);
+assert.equal(edge.removed,16);assert.equal(edge.pixels[12*4+3],255);assert.deepEqual(pixels,original);
+const all=removeLightBackground(pixels,5,5,30,true);assert.equal(all.removed,17);assert.equal(all.pixels[12*4+3],0);assert.equal(all.pixels[6*4+3],255);
+assert.equal(removeLightBackground(new Uint8ClampedArray([230,230,230,255]),1,1,20).removed,0);
+assert.equal(removeLightBackground(new Uint8ClampedArray([230,230,230,255]),1,1,30).removed,1);
+assert.equal(removeLightBackground(new Uint8ClampedArray([255,0,0,128]),1,1).pixels[3],128);
+assert.equal(removeLightBackground(new Uint8ClampedArray([255,255,255,255]),1,1).visible,0);
+assert.throws(()=>removeLightBackground(pixels,3,4));
+console.log('PASS: exterior white removal, enclosed white preservation, all-white option, tolerance, alpha and immutable original.');

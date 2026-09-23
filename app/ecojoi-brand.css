@@ -75,3 +75,14 @@ body .ecojoi-login>footer{grid-column:1/-1;text-align:center;color:#58665d}
  .product-editor-content .viewer-hint{font-size:10px;padding:6px 8px;gap:4px;bottom:12px}
  .product-editor-content .art-file{flex-wrap:wrap}
 }
+.artwork-background-dialog{width:min(94vw,680px);max-width:680px;max-height:92dvh;overflow-y:auto}
+.background-toggle{display:flex;align-items:center;gap:12px;font-size:14px}
+.background-comparison{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.background-comparison figure{margin:0;min-width:0}
+.background-comparison figcaption{font-size:14px;font-weight:600;margin-bottom:8px}
+.background-comparison figure>div{height:210px;display:flex;align-items:center;justify-content:center;border:1px solid #d5ded7;border-radius:8px;overflow:hidden;background-color:#fff;background-image:conic-gradient(#d9dfdc 25%,transparent 0 50%,#d9dfdc 0 75%,transparent 0);background-size:16px 16px}
+.background-comparison img{max-width:100%;max-height:100%;object-fit:contain}
+.background-comparison [role=status]{background:#fff;padding:8px}
+.background-note{font-size:14px;line-height:1.5;color:#4a6055}
+.artwork-background-dialog .field{gap:14px;padding:4px 0}
+@media(max-width:480px){.background-comparison figure>div{height:150px}}
