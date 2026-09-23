@@ -14,6 +14,74 @@ export function radiusAt(profile:PrintProfile,y:number){
 // Other models retain normalized visual areas until their own templates exist.
 export const CUP_450_TEMPLATE={width:235.8,height:138.5,top:3,bottom:3.5,seam:1.5};
 
+// Rectangular reference contours measured from the supplied PDFs (1:1).
+// Process mapping confirmed by ECOJOI: rectangular = Silk, USIJET = Digital 360.
+type Point=[number,number];
+type Curve=[Point,Point,Point,Point];
+type CurvedSheet={page:Point;top:Curve[];bottom:Curve[]};
+export type ProductTemplate={source:string;widthMm:number;heightMm:number;productHeightMm:number;faceWidthMm?:number;sheet?:CurvedSheet};
+// Inner cut contours, PDF points, origin at page top left. Bleed is excluded.
+const USIJET_450:CurvedSheet={page:[715.3888,499.7754],top:[
+ [[17.82,90.3837],[36.5216,85.7102],[55.1908,81.166],[74.0143,77.7542]],
+ [[74.0143,77.7542],[119.3754,69.5326],[164.8647,63.5818],[210.348,59.2031]],
+ [[210.348,59.2031],[287.242,51.8008],[362.3769,48.9154],[439.5339,54.1138]],
+ [[439.5339,54.1138],[452.9313,55.0164],[466.34,55.9626],[479.7479,57.1262]],
+ [[479.7479,57.1262],[551.8327,63.3831],[623.929,72.8432],[695.1504,90.2621]]
+ ],bottom:[
+ [[108.2605,484.1826],[137.4814,478.9572],[166.5816,474.6947],[195.3882,470.0507]],
+ [[195.3882,470.0507],[222.4981,465.68],[249.4998,462.1727],[276.4477,459.7111]],
+ [[276.4477,459.7111],[303.173,457.2699],[329.8459,455.6244],[356.5225,455.6485]],
+ [[356.5225,455.6485],[381.526,455.6711],[406.4128,456.7786],[431.2431,458.7975]],
+ [[431.2431,458.7975],[459.2514,461.0745],[487.1883,464.5116],[515.1404,468.8588]],
+ [[515.1404,468.8588],[544.8203,473.4744],[574.7443,478.346],[604.8417,484.135]]
+ ]};
+const USIJET_600:CurvedSheet={page:[793.5,550.3611],top:[
+ [[21.8007,112.685],[117.3591,87.574],[276.4261,70.0641],[395.805,70.0176]],
+ [[395.805,70.0176],[514.6268,70.0633],[672.7552,87.3849],[768.4537,112.3069]]
+ ],bottom:[
+ [[118.9165,531.8951],[191.7485,513.7636],[308.0358,501.2168],[395.805,501.1735]],
+ [[395.805,501.1735],[485.5283,501.2225],[604.9417,515.6202],[677.4863,533.1548]]
+ ]};
+function sampleCurves(curves:Curve[]){
+ const points:Point[]=[];
+ for(const [a,b,c,d] of curves)for(let i=0;i<=32;i++){const t=i/32,s=1-t;points.push([s*s*s*a[0]+3*s*s*t*b[0]+3*s*t*t*c[0]+t*t*t*d[0],s*s*s*a[1]+3*s*s*t*b[1]+3*s*t*t*c[1]+t*t*t*d[1]]);}
+ const lengths=[0];for(let i=1;i<points.length;i++)lengths.push(lengths[i-1]+Math.hypot(points[i][0]-points[i-1][0],points[i][1]-points[i-1][1]));
+ return {points,lengths,length:lengths.at(-1)!};
+}
+function pointAlong(samples:ReturnType<typeof sampleCurves>,u:number):Point{
+ const distance=Math.max(0,Math.min(1,u))*samples.length;
+ for(let i=1;i<samples.points.length;i++)if(samples.lengths[i]>=distance){const t=(distance-samples.lengths[i-1])/Math.max(1e-9,samples.lengths[i]-samples.lengths[i-1]),a=samples.points[i-1],b=samples.points[i];return [a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])];}
+ return samples.points.at(-1)!;
+}
+function digitalTemplate(model:string):ProductTemplate|undefined{
+ const sheet=model==='COPO ECO 600 ML'?USIJET_600:['COPO ECO 450 ML','COPO ECO 450 ML COM TAMPA BUCKS'].includes(model)?USIJET_450:undefined;
+ if(!sheet)return;
+ const a=sampleCurves(sheet.top),b=sampleCurves(sheet.bottom),top=pointAlong(a,.5),bottom=pointAlong(b,.5);
+ return {source:sheet===USIJET_450?'FACA 450 USIJET.pdf':'FACA 600 USIJET.pdf',sheet,widthMm:(a.length+b.length)/2*25.4/72,heightMm:Math.hypot(top[0]-bottom[0],top[1]-bottom[1])*25.4/72,productHeightMm:model.includes('BUCKS')?157:sheet===USIJET_450?145:154};
+}
+export function matchesSheet(rule:ProductTemplate,w:number,h:number){return !!rule.sheet&&Math.abs((w/h)/(rule.sheet.page[0]/rule.sheet.page[1])-1)<.005;}
+export function applySheetUV(geometry:THREE.BufferGeometry,rule:ProductTemplate){
+ if(!rule.sheet)return;
+ const {sheet}=rule,top=sampleCurves(sheet.top),bottom=sampleCurves(sheet.bottom),uv=geometry.attributes.uv;
+ for(let i=0;i<uv.count;i++){const u=uv.getX(i),v=uv.getY(i),a=pointAlong(top,u),b=pointAlong(bottom,u);uv.setXY(i,(a[0]*v+b[0]*(1-v))/sheet.page[0],1-(a[1]*v+b[1]*(1-v))/sheet.page[1]);}
+ uv.needsUpdate=true;
+}
+const TEMPLATES:Record<string,ProductTemplate>={
+ "COPO ECO 250 ML":{source:"Copo Eco 250ml.pdf",widthMm:205,heightMm:65,productHeightMm:83},
+ "COPO ECO 250 ML COM TAMPA BUCKS":{source:"Copo Eco 250ml.pdf",widthMm:205,heightMm:65,productHeightMm:95},
+ "COPO ECO 450 ML":{source:"Planilha GABARITO 450 ml",widthMm:234.3,heightMm:132,productHeightMm:145},
+ "COPO ECO 450 ML COM TAMPA BUCKS":{source:"Planilha GABARITO 450 ml",widthMm:234.3,heightMm:132,productHeightMm:157},
+ "COPO ECO 600 ML":{source:"Gabarito Eco 600ml.pdf",widthMm:222,heightMm:132,productHeightMm:154},
+ "TAÇA GIN 550 ML":{source:"Gabarito taça gin.pdf",widthMm:308,heightMm:35,productHeightMm:200},
+ "COPO LONG DRINK 330 ML":{source:"Long Drink.pdf",widthMm:170,heightMm:125,productHeightMm:150},
+ "TAÇA PRIME 170 ML":{source:"Taça Prime Gabarito.pdf",widthMm:150,heightMm:40,faceWidthMm:57.16,productHeightMm:216.5},
+};
+export function templateFor(model:string,process?:string):ProductTemplate|undefined {
+ if(process==='DIGITAL 360')return digitalTemplate(model.toUpperCase());
+ if(!process||!['SILK','SILK FRENTE','SILK FRENTE E VERSO','SILK 360'].includes(process))return;
+ return TEMPLATES[model.toUpperCase()];
+}
+
 // Individually reviewed safe bands on the existing normalized models, not mm.
 // Keep bottle shoulders, stems, feet, rims and handle attachments unprinted.
 export const MODEL_PRINT_BANDS:Record<string,{bottom:number;top:number}>={
@@ -37,17 +105,28 @@ export const MODEL_PRINT_BANDS:Record<string,{bottom:number;top:number}>={
  "CANECA DE CHOPP 500 ML":{bottom:.15,top:.89},
 };
 
-export function printArea(profile:PrintProfile,model:string,faces:boolean){
+export function printArea(profile:PrintProfile,model:string,faces:boolean,process?:string){
  const height=profile.points.at(-1)![1];
  const band=profile.band??MODEL_PRINT_BANDS[model.toUpperCase()];
- const bottom=band?height*band.bottom:profile.printMin+(height-profile.printMin)*.07;
- const top=height*(band?.top??.93);
+ let bottom=band?height*band.bottom:profile.printMin+(height-profile.printMin)*.07;
+ let top=height*(band?.top??.93);
+ const template=templateFor(model,process);
+ const unitsPerMm=template?(profile.fullHeight??height)/template.productHeightMm:0;
+ if(template){
+  // Center on the existing printable body, constrained by rim/stem geometry.
+  // PDF contours give dimensions, not a measured vertical registration point.
+  const maxTop=height-.025,safeHeight=Math.min(template.heightMm*unitsPerMm,maxTop-profile.printMin);
+  bottom=Math.max(profile.printMin,Math.min((top+bottom-safeHeight)/2,maxTop-safeHeight));
+  top=bottom+safeHeight;
+ }
  const minRadius=Math.min(...Array.from({length:65},(_,i)=>radiusAt(profile,bottom+(top-bottom)*i/64)));
  const radius=radiusAt(profile,(top+bottom)/2);
- const gap=profile.handle?.72:.06;
- const sweep=2*Math.PI-gap;
+ let gap=profile.handle?.72:.06;
+ let sweep=2*Math.PI-gap;
+ if(template&&!faces&&!template.sheet){sweep=Math.min(sweep,template.widthMm*unitsPerMm/radius);gap=2*Math.PI-sweep;}
  const start=profile.handle?Math.PI/2+gap/2:Math.PI+gap/2;
- return {bottom,top,width:profile.flat?profile.flat.width:faces?minRadius*1.9:sweep*radius,height:top-bottom,start,sweep};
+ const faceWidth=template?Math.min(minRadius*1.9,(template.faceWidthMm??template.widthMm/2)*unitsPerMm):minRadius*1.9;
+ return {bottom,top,width:profile.flat?profile.flat.width:faces?faceWidth:sweep*radius,height:top-bottom,start,sweep};
 }
 
 export function containRect(imageWidth:number,imageHeight:number,width:number,height:number,padding=0){

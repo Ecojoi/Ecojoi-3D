@@ -4,7 +4,7 @@ import {Maximize,Minimize,RotateCcw,Rotate3D} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {COLORS,type Product} from "@/lib/catalog";
 import * as THREE from "three";
-import {printArea,containRect,faceGeometry,wrapGeometry} from "@/lib/print-layout";
+import {printArea,containRect,faceGeometry,wrapGeometry,templateFor,matchesSheet,applySheetUV} from "@/lib/print-layout";
 import {catalogueProfile,catalogueBody,addCatalogueDetails} from "@/lib/catalogue-geometry";
 import type {PrintProfile} from "@/lib/print-layout";
 import {alphaBounds,templateFaces,canSplitTemplate} from "@/lib/artwork-regions";
@@ -76,9 +76,12 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
   }catch{if(split){split=false;setArtNotice("Não foi possível conferir a separação. Arte inteira nas duas faces.");}}
   const isLogo=product.artMode!=="template"||(twoFaces&&!split);
   const faces=twoFaces||["SILK","SILK FRENTE","PERSONALIZAÇÃO FRENTE"].includes(product.print)||!!profile.flat||isLogo;
-  const area=printArea(profile,product.model,faces);
+    const area=printArea(profile,product.model,faces,product.print);
+    const rule=templateFor(product.model,product.print);
+    const curved=!faces&&!!rule?.sheet&&matchesSheet(rule,img.width,img.height);
+    if(!faces&&rule?.sheet&&!curved)setArtNotice("Formato diferente do USIJET. Envie a página inteira do gabarito, sem recortar as margens. Esta prévia usa encaixe retangular estimado.");
   // Preserve the calibrated width for genuine two-panel templates only.
-  if(split)area.width*=1.4/1.9;
+  // Each model now supplies its own safe face width; never apply a generic shrink.
   const canvas=document.createElement("canvas"),aspect=area.width/area.height;
   canvas.width=Math.min(4096,Math.max(512,Math.round(1536*aspect)));
   canvas.height=Math.round(canvas.width/aspect);
@@ -87,15 +90,17 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
   const regions=templateFaces(product.model,img.width,img.height);
   const sourceRegion=split?regions[0]:isLogo?bounds:{x:0,y:0,width:img.width,height:img.height};
   const rect=containRect(sourceRegion.width,sourceRegion.height,canvas.width,canvas.height,isLogo?.025:faces?.06:.012);
-  if(isLogo){
+    if(isLogo){
    const scale=product.logoSize==="small"?.65:product.logoSize==="medium"?.82:1;
    rect.width*=scale;rect.height*=scale;
    rect.x=(canvas.width-rect.width)/2;rect.y=(canvas.height-rect.height)/2;
-  }
+    }
+    if(curved){canvas.width=img.width;canvas.height=img.height;Object.assign(rect,{x:0,y:0,width:img.width,height:img.height});}
   context.drawImage(img,sourceRegion.x,sourceRegion.y,sourceRegion.width,sourceRegion.height,rect.x,rect.y,rect.width,rect.height);
   const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
   tex.anisotropy=Math.min(renderer!.capabilities.getMaxAnisotropy(),8);textures.push(tex);
-  const printGeo=faces?faceGeometry(profile,area):wrapGeometry(profile,area);
+    const printGeo=faces?faceGeometry(profile,area):wrapGeometry(profile,area);
+    if(curved&&rule)applySheetUV(printGeo,rule);
   const printMat=new THREE.MeshStandardMaterial({map:tex,transparent:true,roughness:.85,metalness:0,side:THREE.FrontSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});
   const printMesh=new THREE.Mesh(printGeo,printMat);scene.add(printMesh);
   if(twoFaces){
