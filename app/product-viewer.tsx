@@ -7,7 +7,7 @@ import * as THREE from "three";
 import {printArea,containRect,faceGeometry,wrapGeometry} from "@/lib/print-layout";
 import {catalogueProfile,catalogueBody,addCatalogueDetails} from "@/lib/catalogue-geometry";
 import type {PrintProfile} from "@/lib/print-layout";
-import {alphaBounds,templateFaces} from "@/lib/artwork-regions";
+import {alphaBounds,templateFaces,canSplitTemplate} from "@/lib/artwork-regions";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 
@@ -36,8 +36,8 @@ export function modelProfile(name:string):Profile { const active=catalogueProfil
 }
 export default function ProductViewer({product,token}:{product:Product;token?:string}){
  const viewState=useRef<{model:string;position:number[];target:number[]}|null>(null);
- const host=useRef<HTMLDivElement>(null),wrapper=useRef<HTMLDivElement>(null),reset=useRef<()=>void>(()=>{});const [error,setError]=useState(""),[full,setFull]=useState(false),[loading,setLoading]=useState(true);
- useEffect(()=>{const el=host.current;if(!el)return;let disposed=false,renderer:THREE.WebGLRenderer|undefined,controls:OrbitControls|undefined,observer:ResizeObserver|undefined,frame=0,visible=true,visibility:IntersectionObserver|undefined,environment:THREE.WebGLRenderTarget|undefined;const textures:THREE.Texture[]=[];const scene=new THREE.Scene();setError("");setLoading(true);
+ const host=useRef<HTMLDivElement>(null),wrapper=useRef<HTMLDivElement>(null),reset=useRef<()=>void>(()=>{});const [artNotice,setArtNotice]=useState("");const [error,setError]=useState(""),[full,setFull]=useState(false),[loading,setLoading]=useState(true);
+ useEffect(()=>{const el=host.current;if(!el)return;let disposed=false,renderer:THREE.WebGLRenderer|undefined,controls:OrbitControls|undefined,observer:ResizeObserver|undefined,frame=0,visible=true,visibility:IntersectionObserver|undefined,environment:THREE.WebGLRenderTarget|undefined;const textures:THREE.Texture[]=[];const scene=new THREE.Scene();setError("");setArtNotice("");setLoading(true);
  try{
  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0xffffff);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;el.replaceChildren(renderer.domElement);renderer.domElement.setAttribute("aria-label","Modelo 3D interativo. Arraste para girar; use a roda do mouse para ampliar.");
  const camera=new THREE.PerspectiveCamera(32,1,.01,100);const profile=modelProfile(product.model),height=profile.fullHeight??(profile.bag?profile.points.at(-1)![1]*1.3:profile.points.at(-1)![1]);
@@ -58,35 +58,34 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  if(product.art){const source=`/api/studio/assets/${product.art.id}${token?`?token=${encodeURIComponent(token)}`:""}`;new THREE.TextureLoader().load(source,(raw)=>{
   if(disposed){raw.dispose();return;}textures.push(raw);
   const twoFaces=product.print==="SILK FRENTE E VERSO";
-  const faces=twoFaces||["SILK","SILK FRENTE","PERSONALIZAÇÃO FRENTE"].includes(product.print)||!!profile.flat||product.artMode!=="template";
+  const img=raw.image as HTMLImageElement;
+  let split=twoFaces&&product.artMode==="template";
+  let bounds={x:0,y:0,width:img.width,height:img.height};
+  // Analyze once for both safe face separation and transparent logo margins.
+  try{
+   const mask=document.createElement("canvas"),scale=Math.min(1,2048/Math.max(img.width,img.height));
+   mask.width=Math.max(1,Math.round(img.width*scale));mask.height=Math.max(1,Math.round(img.height*scale));
+   const ctx=mask.getContext("2d",{willReadFrequently:true})!;
+   ctx.drawImage(img,0,0,mask.width,mask.height);
+   const pixels=ctx.getImageData(0,0,mask.width,mask.height).data;
+   const crop=alphaBounds(pixels,mask.width,mask.height);
+   bounds={x:crop.x*img.width/mask.width,y:crop.y*img.height/mask.height,width:crop.width*img.width/mask.width,height:crop.height*img.height/mask.height};
+   if(split&&!canSplitTemplate(product.model,pixels,mask.width,mask.height)){
+    split=false;setArtNotice("Arte sem separação segura: repetida inteira nas duas faces.");
+   }
+  }catch{if(split){split=false;setArtNotice("Não foi possível conferir a separação. Arte inteira nas duas faces.");}}
+  const isLogo=product.artMode!=="template"||(twoFaces&&!split);
+  const faces=twoFaces||["SILK","SILK FRENTE","PERSONALIZAÇÃO FRENTE"].includes(product.print)||!!profile.flat||isLogo;
   const area=printArea(profile,product.model,faces);
-  // Preserve the previously calibrated template width. Enlargement is for logos.
-  if(twoFaces&&product.artMode==="template")area.width*=1.4/1.9;
-  const canvas=document.createElement("canvas");
-  // Pixel ratio follows the actual print surface, rather than stretching a
-  // fixed 2:1 texture over every product.
-  const aspect=area.width/area.height;
+  // Preserve the calibrated width for genuine two-panel templates only.
+  if(split)area.width*=1.4/1.9;
+  const canvas=document.createElement("canvas"),aspect=area.width/area.height;
   canvas.width=Math.min(4096,Math.max(512,Math.round(1536*aspect)));
   canvas.height=Math.round(canvas.width/aspect);
   if(profile.flat){canvas.height=2048;canvas.width=Math.max(32,Math.round(2048*aspect));}
   const context=canvas.getContext("2d")!;
-  const img=raw.image as HTMLImageElement;
-  const split=twoFaces&&product.artMode==="template";
-  const isLogo=product.artMode!=="template";
   const regions=templateFaces(product.model,img.width,img.height);
-  let sourceRegion=split?regions[0]:{x:0,y:0,width:img.width,height:img.height};
-  if(isLogo){
-   // Read a bounded mask to exclude transparent padding from logo sizing.
-   // Opaque white backgrounds and template margins are deliberately preserved.
-   try{
-    const mask=document.createElement("canvas"),scale=Math.min(1,4096/Math.max(img.width,img.height));
-    mask.width=Math.max(1,Math.round(img.width*scale));mask.height=Math.max(1,Math.round(img.height*scale));
-    const ctx=mask.getContext("2d",{willReadFrequently:true})!;
-    ctx.drawImage(img,0,0,mask.width,mask.height);
-    const bounds=alphaBounds(ctx.getImageData(0,0,mask.width,mask.height).data,mask.width,mask.height);
-    sourceRegion={x:bounds.x*img.width/mask.width,y:bounds.y*img.height/mask.height,width:bounds.width*img.width/mask.width,height:bounds.height*img.height/mask.height};
-   }catch{/* Fall back to the complete image if pixel access is unavailable. */}
-  }
+  const sourceRegion=split?regions[0]:isLogo?bounds:{x:0,y:0,width:img.width,height:img.height};
   const rect=containRect(sourceRegion.width,sourceRegion.height,canvas.width,canvas.height,isLogo?.025:faces?.06:.012);
   if(isLogo){
    const scale=product.logoSize==="small"?.65:product.logoSize==="medium"?.82:1;
@@ -118,6 +117,6 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  },[product.model,product.color,product.print,product.art?.id,product.artMode,product.logoSize,token]);
  useEffect(()=>{const f=()=>setFull(!!document.fullscreenElement);document.addEventListener("fullscreenchange",f);return()=>document.removeEventListener("fullscreenchange",f);},[]);
  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await wrapper.current?.requestFullscreen();}catch{setError("Tela cheia indisponível neste navegador.");}}
- return <div className="viewer-wrap" ref={wrapper}><div ref={host} className="viewer-canvas"/><div className="viewer-actions"><Button variant="outline" size="icon" aria-label="Restaurar visão" title="Restaurar visão" onClick={()=>reset.current()}><RotateCcw/></Button><Button variant="outline" size="icon" aria-label={full?"Sair da tela cheia":"Visualizar em tela cheia"} onClick={fullscreen}>{full?<Minimize/>:<Maximize/>}</Button></div>{loading&&<div className="viewer-loading" role="status">Carregando arte…</div>}{error&&<div className="viewer-error" role="alert">{error}</div>}<div className="viewer-hint"><Rotate3D size={14}/>Arraste para girar · role para ampliar</div></div>;
+ return <div className="viewer-wrap" ref={wrapper}><div ref={host} className="viewer-canvas"/><div className="viewer-actions"><Button variant="outline" size="icon" aria-label="Restaurar visão" title="Restaurar visão" onClick={()=>reset.current()}><RotateCcw/></Button><Button variant="outline" size="icon" aria-label={full?"Sair da tela cheia":"Visualizar em tela cheia"} onClick={fullscreen}>{full?<Minimize/>:<Maximize/>}</Button></div>{loading&&<div className="viewer-loading" role="status">Carregando arte…</div>}{error&&<div className="viewer-error" role="alert">{error}</div>}{artNotice&&<div className="viewer-art-notice" role="status">{artNotice}</div>}<div className="viewer-hint"><Rotate3D size={14}/>Arraste para girar · role para ampliar</div></div>;
 }
 

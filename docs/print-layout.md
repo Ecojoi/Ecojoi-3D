@@ -49,3 +49,8 @@ O botão Remover fundo abre a mesma preparação para artes já anexadas. Cancel
 
 ## Acabamento por família de produto
 Copos ECO e ECOLOGIC (inclusive com tampa Bucks e designs antigos) usam superfície fosca, sem clearcoat, reflexo especular ou metalização. Acrílicos e demais modelos mantêm o acabamento anterior. Códigos de cor, transparência, arte, geometria e iluminação permanecem iguais. O mesmo material é usado na edição e nas apresentações compartilhadas.
+
+
+## Proteção contra corte em frente e verso
+Antes de dividir um gabarito, o visualizador verifica se há arte nos dois painéis e se a separação entre eles está vazia (incluindo o intervalo próprio da Taça Prime). Uma logo única que atravessa o corte, um painel vazio ou conteúdo no intervalo da Prime faz a arte inteira ser repetida em lados opostos. A edição informa esse ajuste; os arquivos, links e escolhas armazenadas não são regravados. O encaixe usa proporção original e limites de impressão existentes. Gabaritos de duas faces com separação vazia mantêm seu posicionamento.
+A detecção auxilia a visualização, não valida medidas físicas ou intenção do arquivo. Logotipo igual nas duas faces continua sendo o modo explícito para repetir uma marca. Arquivos ambíguos devem ser preparados com duas áreas separadas e sem linhas de gabarito.
