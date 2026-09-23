@@ -46,3 +46,6 @@ A curvatura inferior da Gin segue a silhueta arredondada da página 11. O diâme
 ## Preparação da logo e remoção de fundo
 Todas as novas importações raster e páginas de PDF passam pela preparação em PNG antes do envio. A remoção de fundo claro conectado às bordas vem ativada; tolerância e opção de remover todos os tons claros podem ser conferidas na comparação com o original. Áreas brancas internas são preservadas por padrão. Transparência existente, proporções e resolução são mantidas. Não é segmentação de fotografias: fundos coloridos/quadriculados desenhados exigem outra arte ou tratamento externo.
 O botão Remover fundo abre a mesma preparação para artes já anexadas. Cancelar não substitui a arte; Aplicar PNG usa o upload existente, sem exclusão do arquivo original, alteração do banco ou dos links. A conversão é local ao navegador. Arquivos vazios após tratamento e PNGs acima do limite são rejeitados, e erros de envio permitem nova tentativa.
+
+## Acabamento por família de produto
+Copos ECO e ECOLOGIC (inclusive com tampa Bucks e designs antigos) usam superfície fosca, sem clearcoat, reflexo especular ou metalização. Acrílicos e demais modelos mantêm o acabamento anterior. Códigos de cor, transparência, arte, geometria e iluminação permanecem iguais. O mesmo material é usado na edição e nas apresentações compartilhadas.
