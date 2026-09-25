@@ -1,0 +1,50 @@
+[
+  {
+    "source": "Balde.pdf",
+    "file": "/gabaritos/balde.pdf",
+    "sha256": "6f09a0299f4fd26c83c3265979c2b586e94a63a4ec9b948402e002fdef377222",
+    "status": "pending-model-confirmation"
+  },
+  {
+    "source": "caneca chopp medidas.pdf",
+    "file": "/gabaritos/caneca-chopp.pdf",
+    "sha256": "144c2d7efe415f9f5d9de96b8689b73e472878e7664e990c3d009d9950eddf77",
+    "status": "pending-model-confirmation"
+  },
+  {
+    "source": "Copo Eco 250ml.pdf",
+    "file": "/gabaritos/eco-250-silk.pdf",
+    "sha256": "ecbdc6a7498ef2ec74f62126b530a812c16fd7ba015c78de43909806370af226",
+    "status": "linked-silk"
+  },
+  {
+    "source": "GABARITO COPO ECO 450ML.pdf",
+    "file": "/gabaritos/eco-450-silk.pdf",
+    "sha256": "9ce320c512b747227271077dc718c7eefd2f7e4cf9fef8e72c10015f2c75da66",
+    "status": "linked-silk"
+  },
+  {
+    "source": "Gabarito Eco 600ml.pdf",
+    "file": "/gabaritos/eco-600-silk.pdf",
+    "sha256": "e5aba9758e87eb43ae556a6293d511fd067967999c33751bde6135030740e7b1",
+    "status": "linked-silk"
+  },
+  {
+    "source": "Gabarito taça gin.pdf",
+    "file": "/gabaritos/gin-silk.pdf",
+    "sha256": "32fbaeb49458a2337272b63a0dc42a3ac0c9614d608f869caf5fef3482812348",
+    "status": "linked-silk"
+  },
+  {
+    "source": "Long Drink.pdf",
+    "file": "/gabaritos/long-drink-silk.pdf",
+    "sha256": "62acbdb4436f47d51ab8093394865f6615d2d530b10ba326e079647a7bfe0913",
+    "status": "linked-silk"
+  },
+  {
+    "source": "Taça Prime Gabarito.pdf",
+    "file": "/gabaritos/prime-silk.pdf",
+    "sha256": "b666d376a6043ca30214827efa43f11ca833e0896758e0b88e1e43c942761bbf",
+    "status": "linked-silk"
+  }
+]

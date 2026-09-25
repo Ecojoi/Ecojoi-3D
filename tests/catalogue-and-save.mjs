@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import ts from 'typescript';
 import * as THREE from 'three';
@@ -36,6 +37,15 @@ for(const p of entries.ECOJOI_CATALOGUE){
  }
 }
 assert.equal(calibrated,8);console.log('PASS 8 model-specific Silk references: dimensions, body limits and proportional fit.');
+for(const model of ['COPO ECO 450 ML','COPO ECO 450 ML COM TAMPA BUCKS']){
+ const rule=layout.templateFor(model,'SILK');assert.equal(rule.widthMm,200);assert.equal(rule.heightMm,125);assert.equal(rule.source,'GABARITO COPO ECO 450ML.pdf');
+}
+const imported=JSON.parse(fs.readFileSync(new URL('../docs/gabaritos-import-2026-09-25.json',import.meta.url),'utf8'));
+assert.equal(imported.length,8);
+for(const entry of imported){const data=fs.readFileSync(new URL('../public'+entry.file,import.meta.url));assert.equal(data.subarray(0,5).toString(),'%PDF-');assert.equal(createHash('sha256').update(data).digest('hex'),entry.sha256);}
+for(const product of entries.ECOJOI_CATALOGUE){const rule=layout.templateFor(product.model,'SILK');if(rule)assert(imported.some(f=>f.file===rule.pdfPath&&f.status==='linked-silk'));}
+assert.equal(layout.templateFor('CANECA CHOPP 500 ML','SILK'),undefined,'Do not guess unspecified mug capacity');
+console.log('PASS imported original PDFs: byte integrity, linked downloads and Eco 450 useful area.');
 for(const model of ['COPO ECO 450 ML','COPO ECO 450 ML COM TAMPA BUCKS','COPO ECO 600 ML']){
  const rule=layout.templateFor(model,'DIGITAL 360'),silk=layout.templateFor(model,'SILK'),profile=geometry.catalogueProfile(model);
  assert(rule.sheet&&!silk.sheet);assert(rule.source.includes('USIJET'));

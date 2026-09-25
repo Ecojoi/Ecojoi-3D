@@ -19,7 +19,7 @@ export const CUP_450_TEMPLATE={width:235.8,height:138.5,top:3,bottom:3.5,seam:1.
 type Point=[number,number];
 type Curve=[Point,Point,Point,Point];
 type CurvedSheet={page:Point;top:Curve[];bottom:Curve[]};
-export type ProductTemplate={source:string;widthMm:number;heightMm:number;productHeightMm:number;faceWidthMm?:number;sheet?:CurvedSheet};
+export type ProductTemplate={source:string;pdfPath?:string;widthMm:number;heightMm:number;productHeightMm:number;faceWidthMm?:number;sheet?:CurvedSheet};
 // Inner cut contours, PDF points, origin at page top left. Bleed is excluded.
 const USIJET_450:CurvedSheet={page:[715.3888,499.7754],top:[
  [[17.82,90.3837],[36.5216,85.7102],[55.1908,81.166],[74.0143,77.7542]],
@@ -67,14 +67,14 @@ export function applySheetUV(geometry:THREE.BufferGeometry,rule:ProductTemplate)
  uv.needsUpdate=true;
 }
 const TEMPLATES:Record<string,ProductTemplate>={
- "COPO ECO 250 ML":{source:"Copo Eco 250ml.pdf",widthMm:205,heightMm:65,productHeightMm:83},
- "COPO ECO 250 ML COM TAMPA BUCKS":{source:"Copo Eco 250ml.pdf",widthMm:205,heightMm:65,productHeightMm:95},
- "COPO ECO 450 ML":{source:"Planilha GABARITO 450 ml",widthMm:234.3,heightMm:132,productHeightMm:145},
- "COPO ECO 450 ML COM TAMPA BUCKS":{source:"Planilha GABARITO 450 ml",widthMm:234.3,heightMm:132,productHeightMm:157},
- "COPO ECO 600 ML":{source:"Gabarito Eco 600ml.pdf",widthMm:222,heightMm:132,productHeightMm:154},
- "TAÇA GIN 550 ML":{source:"Gabarito taça gin.pdf",widthMm:308,heightMm:35,productHeightMm:200},
- "COPO LONG DRINK 330 ML":{source:"Long Drink.pdf",widthMm:170,heightMm:125,productHeightMm:150},
- "TAÇA PRIME 170 ML":{source:"Taça Prime Gabarito.pdf",widthMm:150,heightMm:40,faceWidthMm:57.16,productHeightMm:216.5},
+ "COPO ECO 250 ML":{source:"Copo Eco 250ml.pdf",pdfPath:"/gabaritos/eco-250-silk.pdf",widthMm:205,heightMm:65,productHeightMm:83},
+ "COPO ECO 250 ML COM TAMPA BUCKS":{source:"Copo Eco 250ml.pdf",pdfPath:"/gabaritos/eco-250-silk.pdf",widthMm:205,heightMm:65,productHeightMm:95},
+ "COPO ECO 450 ML":{source:"GABARITO COPO ECO 450ML.pdf",pdfPath:"/gabaritos/eco-450-silk.pdf",widthMm:200,heightMm:125,productHeightMm:145},
+ "COPO ECO 450 ML COM TAMPA BUCKS":{source:"GABARITO COPO ECO 450ML.pdf",pdfPath:"/gabaritos/eco-450-silk.pdf",widthMm:200,heightMm:125,productHeightMm:157},
+ "COPO ECO 600 ML":{source:"Gabarito Eco 600ml.pdf",pdfPath:"/gabaritos/eco-600-silk.pdf",widthMm:222,heightMm:132,productHeightMm:154},
+ "TAÇA GIN 550 ML":{source:"Gabarito taça gin.pdf",pdfPath:"/gabaritos/gin-silk.pdf",widthMm:308,heightMm:35,productHeightMm:200},
+ "COPO LONG DRINK 330 ML":{source:"Long Drink.pdf",pdfPath:"/gabaritos/long-drink-silk.pdf",widthMm:170,heightMm:125,productHeightMm:150},
+ "TAÇA PRIME 170 ML":{source:"Taça Prime Gabarito.pdf",pdfPath:"/gabaritos/prime-silk.pdf",widthMm:150,heightMm:40,faceWidthMm:57.16,productHeightMm:216.5},
 };
 export function templateFor(model:string,process?:string):ProductTemplate|undefined {
  if(process==='DIGITAL 360')return digitalTemplate(model.toUpperCase());
