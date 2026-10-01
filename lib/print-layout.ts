@@ -54,10 +54,11 @@ function pointAlong(samples:ReturnType<typeof sampleCurves>,u:number):Point{
  return samples.points.at(-1)!;
 }
 function digitalTemplate(model:string):ProductTemplate|undefined{
+ if(model==='GARRAFA ECOBIO 500 ML')return {source:'Medidas ECOJOI 01/10/2026',widthMm:190,heightMm:145,productHeightMm:200};
  const sheet=model==='COPO ECO 600 ML'?USIJET_600:['COPO ECO 450 ML','COPO ECO 450 ML COM TAMPA BUCKS'].includes(model)?USIJET_450:undefined;
  if(!sheet)return;
- const a=sampleCurves(sheet.top),b=sampleCurves(sheet.bottom),top=pointAlong(a,.5),bottom=pointAlong(b,.5);
- return {source:sheet===USIJET_450?'FACA 450 USIJET.pdf':'FACA 600 USIJET.pdf',sheet,widthMm:(a.length+b.length)/2*25.4/72,heightMm:Math.hypot(top[0]-bottom[0],top[1]-bottom[1])*25.4/72,productHeightMm:model.includes('BUCKS')?157:sheet===USIJET_450?145:154};
+ const dimensions=sheet===USIJET_450?[223.818,152.58] as const:[251.446,162.749] as const;
+ return {source:sheet===USIJET_450?'FACA 450 USIJET.pdf':'FACA 600 USIJET.pdf',sheet,widthMm:dimensions[0],heightMm:dimensions[1],productHeightMm:model.includes('BUCKS')?157:sheet===USIJET_450?145:154};
 }
 export function matchesSheet(rule:ProductTemplate,w:number,h:number){return !!rule.sheet&&Math.abs((w/h)/(rule.sheet.page[0]/rule.sheet.page[1])-1)<.005;}
 export function applySheetUV(geometry:THREE.BufferGeometry,rule:ProductTemplate){
@@ -67,14 +68,18 @@ export function applySheetUV(geometry:THREE.BufferGeometry,rule:ProductTemplate)
  uv.needsUpdate=true;
 }
 const TEMPLATES:Record<string,ProductTemplate>={
- "COPO ECO 250 ML":{source:"Copo Eco 250ml.pdf",pdfPath:"/gabaritos/eco-250-silk.pdf",widthMm:205,heightMm:65,productHeightMm:83},
- "COPO ECO 250 ML COM TAMPA BUCKS":{source:"Copo Eco 250ml.pdf",pdfPath:"/gabaritos/eco-250-silk.pdf",widthMm:205,heightMm:65,productHeightMm:95},
+ "COPO ECO 250 ML":{source:"Copo Eco 250ml.pdf",pdfPath:"/gabaritos/eco-250-silk.pdf",widthMm:215,heightMm:65,productHeightMm:83},
+ "COPO ECO 250 ML COM TAMPA BUCKS":{source:"Copo Eco 250ml.pdf",pdfPath:"/gabaritos/eco-250-silk.pdf",widthMm:215,heightMm:65,productHeightMm:95},
  "COPO ECO 450 ML":{source:"GABARITO COPO ECO 450ML.pdf",pdfPath:"/gabaritos/eco-450-silk.pdf",widthMm:200,heightMm:125,productHeightMm:145},
  "COPO ECO 450 ML COM TAMPA BUCKS":{source:"GABARITO COPO ECO 450ML.pdf",pdfPath:"/gabaritos/eco-450-silk.pdf",widthMm:200,heightMm:125,productHeightMm:157},
  "COPO ECO 600 ML":{source:"Gabarito Eco 600ml.pdf",pdfPath:"/gabaritos/eco-600-silk.pdf",widthMm:222,heightMm:132,productHeightMm:154},
- "TAÇA GIN 550 ML":{source:"Gabarito taça gin.pdf",pdfPath:"/gabaritos/gin-silk.pdf",widthMm:308,heightMm:35,productHeightMm:200},
- "COPO LONG DRINK 330 ML":{source:"Long Drink.pdf",pdfPath:"/gabaritos/long-drink-silk.pdf",widthMm:170,heightMm:125,productHeightMm:150},
+ "GARRAFA ECOBIO 500 ML":{source:"Medidas ECOJOI 01/10/2026",widthMm:190,heightMm:145,productHeightMm:200},
+ "COPO VISUAL DRINK 500 ML":{source:"Medidas ECOJOI 01/10/2026",widthMm:212,heightMm:132,productHeightMm:146},
+ "TAÇA GIN 550 ML":{source:"Gabarito taça gin.pdf",pdfPath:"/gabaritos/gin-silk.pdf",widthMm:308,heightMm:38,productHeightMm:200},
+ "COPO LONG DRINK 330 ML":{source:"Long Drink.pdf",pdfPath:"/gabaritos/long-drink-silk.pdf",widthMm:180,heightMm:125,productHeightMm:150},
+ "CANECA CHOPP 500 ML":{source:"Medidas ECOJOI 01/10/2026",widthMm:180,heightMm:98.862,productHeightMm:108},
  "TAÇA PRIME 170 ML":{source:"Taça Prime Gabarito.pdf",pdfPath:"/gabaritos/prime-silk.pdf",widthMm:150,heightMm:40,faceWidthMm:57.16,productHeightMm:216.5},
+ "COPO DESCARTÁVEL 200 ML":{source:"Medidas ECOJOI 01/10/2026",widthMm:200,heightMm:80,productHeightMm:78},
 };
 export function templateFor(model:string,process?:string):ProductTemplate|undefined {
  if(process==='DIGITAL 360')return digitalTemplate(model.toUpperCase());
