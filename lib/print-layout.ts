@@ -148,7 +148,7 @@ export function faceGeometry(profile:PrintProfile,area:ReturnType<typeof printAr
  for(let i=0;i<pos.count;i++){
   const x=pos.getX(i),y=pos.getY(i)+(area.bottom+area.top)/2;
   const r=radiusAt(profile,y)+.003;
-  let z=profile.flat?profile.flat.depth+.002:Math.sqrt(Math.max(0,r*r-x*x))*(profile.ellipse??1),px=x;
+  let z=profile.flat?profile.flat.depth+(profile.bag?.018:.002):Math.sqrt(Math.max(0,r*r-x*x))*(profile.ellipse??1),px=x;
   if(profile.twist){const s=1+.03*Math.sin(Math.atan2(z,x)*12+y*2);px*=s;z*=s;}
   pos.setXYZ(i,px,y,z);
  }
