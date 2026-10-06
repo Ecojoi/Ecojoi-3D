@@ -7,7 +7,7 @@ import * as THREE from "three";
 import {printArea,containRect,faceGeometry,wrapGeometry,templateFor,matchesSheet,applySheetUV} from "@/lib/print-layout";
 import {catalogueProfile,catalogueBody,addCatalogueDetails} from "@/lib/catalogue-geometry";
 import type {PrintProfile} from "@/lib/print-layout";
-import {alphaBounds,templateFaces,canSplitTemplate} from "@/lib/artwork-regions";
+import {previewArtworkBounds,templateFaces,canSplitTemplate} from "@/lib/artwork-regions";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 
@@ -61,16 +61,25 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
   const img=raw.image as HTMLImageElement;
   let split=twoFaces&&product.artMode==="template";
   let bounds={x:0,y:0,width:img.width,height:img.height};
-  // Analyze once for both safe face separation and transparent logo margins.
+  let frontRegion=bounds,backRegion=bounds;
+  // Use a preview-only crop of printed content. Without this, opaque
+  // white margins on PNG/PDF exports shrink both the front and back logos.
   try{
    const mask=document.createElement("canvas"),scale=Math.min(1,2048/Math.max(img.width,img.height));
    mask.width=Math.max(1,Math.round(img.width*scale));mask.height=Math.max(1,Math.round(img.height*scale));
    const ctx=mask.getContext("2d",{willReadFrequently:true})!;
    ctx.drawImage(img,0,0,mask.width,mask.height);
    const pixels=ctx.getImageData(0,0,mask.width,mask.height).data;
-   const crop=alphaBounds(pixels,mask.width,mask.height);
-   bounds={x:crop.x*img.width/mask.width,y:crop.y*img.height/mask.height,width:crop.width*img.width/mask.width,height:crop.height*img.height/mask.height};
-   if(split&&!canSplitTemplate(product.model,pixels,mask.width,mask.height)){
+   const toOriginal=(region:{x:number;y:number;width:number;height:number})=>({
+    x:region.x*img.width/mask.width,y:region.y*img.height/mask.height,
+    width:region.width*img.width/mask.width,height:region.height*img.height/mask.height
+   });
+   bounds=toOriginal(previewArtworkBounds(pixels,mask.width,mask.height));
+   if(split&&canSplitTemplate(product.model,pixels,mask.width,mask.height)){
+    const panels=templateFaces(product.model,mask.width,mask.height);
+    frontRegion=toOriginal(previewArtworkBounds(pixels,mask.width,mask.height,panels[0]));
+    backRegion=toOriginal(previewArtworkBounds(pixels,mask.width,mask.height,panels[1]));
+   }else if(split){
     split=false;setArtNotice("Arte sem separação segura: repetida inteira nas duas faces.");
    }
   }catch{if(split){split=false;setArtNotice("Não foi possível conferir a separação. Arte inteira nas duas faces.");}}
@@ -87,9 +96,9 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
   canvas.height=Math.round(canvas.width/aspect);
   if(profile.flat){canvas.height=2048;canvas.width=Math.max(32,Math.round(2048*aspect));}
   const context=canvas.getContext("2d")!;
-  const regions=templateFaces(product.model,img.width,img.height);
-  const sourceRegion=split?regions[0]:isLogo?bounds:{x:0,y:0,width:img.width,height:img.height};
-  const rect=containRect(sourceRegion.width,sourceRegion.height,canvas.width,canvas.height,isLogo?.025:faces?.06:.012);
+  const sourceRegion=split?frontRegion:isLogo?bounds:{x:0,y:0,width:img.width,height:img.height};
+  const padding=isLogo||split?.025:faces?.06:.012;
+  const rect=containRect(sourceRegion.width,sourceRegion.height,canvas.width,canvas.height,padding);
     if(isLogo){
    const scale=product.logoSize==="small"?.65:product.logoSize==="medium"?.82:1;
    rect.width*=scale;rect.height*=scale;
@@ -107,8 +116,8 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
    let backMat=printMat;
    if(split){
     const backCanvas=document.createElement("canvas");backCanvas.width=canvas.width;backCanvas.height=canvas.height;
-    const backRegion=regions[1];
-    backCanvas.getContext("2d")!.drawImage(img,backRegion.x,backRegion.y,backRegion.width,backRegion.height,rect.x,rect.y,rect.width,rect.height);
+    const backRect=containRect(backRegion.width,backRegion.height,canvas.width,canvas.height,padding);
+    backCanvas.getContext("2d")!.drawImage(img,backRegion.x,backRegion.y,backRegion.width,backRegion.height,backRect.x,backRect.y,backRect.width,backRect.height);
     const backTexture=new THREE.CanvasTexture(backCanvas);backTexture.colorSpace=THREE.SRGBColorSpace;backTexture.anisotropy=tex.anisotropy;textures.push(backTexture);
     backMat=printMat.clone();backMat.map=backTexture;
    }
