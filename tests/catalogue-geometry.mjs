@@ -50,6 +50,7 @@ for(const p of catalog.ECOJOI_CATALOGUE){
   assert(scene.children.length>=5,p.model+' flip cap incomplete');
  }
  if(p.kind==='bucks')assert(profile.lid==='bucks',p.model+' missing Bucks lid');
+ if(p.kind==='paper')assert(profile.paperLid&&scene.children.length>=3,p.model+' missing black paper-cup lid');
  if(p.kind==='bag'){
   assert(profile.flat&&profile.bag,p.model+' missing flat bag geometry');
   assert(body.type==='ExtrudeGeometry',p.model+' should not be a cylindrical bag');
