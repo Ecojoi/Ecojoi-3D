@@ -43,3 +43,28 @@ export function canSplitTemplate(model:string,data:Uint8ClampedArray,width:numbe
  }
  return left&&right;
 }
+
+
+// Crop only the image used by the 3D preview, never the uploaded original.
+// Opaque white PDF/page margins are excluded only when nearly all panel edges
+// are white. Transparent white ink and non-white backgrounds remain intact.
+export function previewArtworkBounds(data:Uint8ClampedArray,width:number,height:number,region:ArtworkRegion={x:0,y:0,width,height}):ArtworkRegion {
+ const x0=Math.max(0,Math.floor(region.x)),x1=Math.min(width,Math.ceil(region.x+region.width));
+ const y0=Math.max(0,Math.floor(region.y)),y1=Math.min(height,Math.ceil(region.y+region.height));
+ if(x1<=x0||y1<=y0)return region;
+ const paper=(x:number,y:number)=>{const i=(y*width+x)*4;return data[i+3]>=250&&data[i]>=245&&data[i+1]>=245&&data[i+2]>=245;};
+ let paperEdges=0,edgeCount=0;
+ for(let x=x0;x<x1;x++){paperEdges+=Number(paper(x,y0))+Number(paper(x,y1-1));edgeCount+=2;}
+ for(let y=y0+1;y<y1-1;y++){paperEdges+=Number(paper(x0,y))+Number(paper(x1-1,y));edgeCount+=2;}
+ const ignorePaper=paperEdges/Math.max(1,edgeCount)>=.96;
+ let left=x1,top=y1,right=-1,bottom=-1;
+ for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+  const i=(y*width+x)*4;
+  if(data[i+3]===0||(ignorePaper&&paper(x,y)))continue;
+  left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);
+ }
+ if(right<left)return region;
+ left=Math.max(x0,left-1);right=Math.min(x1-1,right+1);
+ top=Math.max(y0,top-1);bottom=Math.min(y1-1,bottom+1);
+ return {x:left,y:top,width:right-left+1,height:bottom-top+1};
+}

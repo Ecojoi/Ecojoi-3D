@@ -10,6 +10,19 @@ const catalog=moduleAt('lib/catalog.ts',{'./ecojoi-catalog':entries,'./reference
 const layout=moduleAt('lib/print-layout.ts',{'three':THREE});
 const geometry=moduleAt('lib/catalogue-geometry.ts',{'three':THREE,'./ecojoi-catalog':entries});
 assert.equal(entries.ECOJOI_CATALOGUE.length,21);
+// Consistency of the 3D profile with the dimensions stored in the approved
+// catalog. This checks model geometry, not unverified factory measurements.
+for(const product of entries.ECOJOI_CATALOGUE.filter(p=>['cup','bucks','bottle','paper','disposable','mug'].includes(p.kind))){
+ const profile=geometry.catalogueProfile(product.model);
+ const unitsPerCm=1.6/product.height;
+ assert(Math.abs((profile.fullHeight??profile.points.at(-1)[1])-product.height*unitsPerCm)<1e-8,product.model+' total height');
+ assert(Math.abs(profile.points[2][0]-product.base*unitsPerCm/2)<1e-8,product.model+' base diameter');
+ assert(Math.abs(profile.points.at(-1)[0]-product.mouth*unitsPerCm/2)<=.013,product.model+' mouth diameter');
+ const area=layout.printArea(profile,product.model,true,product.prints[0]);
+ const radius=layout.radiusAt(profile,(area.bottom+area.top)/2);
+ assert(area.width>radius*1.1&&area.width<=radius*2.01,product.model+' front-face printing width');
+}
+
 assert.equal(new Set(entries.ECOJOI_CATALOGUE.map(p=>p.model)).size,21);
 for(const p of entries.ECOJOI_CATALOGUE){
  const profile=geometry.catalogueProfile(p.model);assert(profile,p.model);
@@ -36,15 +49,16 @@ for(const p of entries.ECOJOI_CATALOGUE){
   for(const [w,h] of [[1200,300],[300,1200],[800,800]]){const box=layout.containRect(w,h,area.width,area.height,.025);assert(box.x>=0&&box.y>=0);assert(box.x+box.width<=area.width+1e-8&&box.y+box.height<=area.height+1e-8);assert(Math.abs(box.width/box.height-w/h)<1e-9);}
  }
 }
-assert.equal(calibrated,8);console.log('PASS 8 model-specific Silk references: dimensions, body limits and proportional fit.');
+assert.equal(calibrated,11);console.log('PASS 11 model-specific Silk references: dimensions, body limits and proportional fit.');
 for(const model of ['COPO ECO 450 ML','COPO ECO 450 ML COM TAMPA BUCKS']){
  const rule=layout.templateFor(model,'SILK');assert.equal(rule.widthMm,200);assert.equal(rule.heightMm,125);assert.equal(rule.source,'GABARITO COPO ECO 450ML.pdf');
 }
 const imported=JSON.parse(fs.readFileSync(new URL('../docs/gabaritos-import-2026-09-25.json',import.meta.url),'utf8'));
 assert.equal(imported.length,8);
 for(const entry of imported){const data=fs.readFileSync(new URL('../public'+entry.file,import.meta.url));assert.equal(data.subarray(0,5).toString(),'%PDF-');assert.equal(createHash('sha256').update(data).digest('hex'),entry.sha256);}
-for(const product of entries.ECOJOI_CATALOGUE){const rule=layout.templateFor(product.model,'SILK');if(rule)assert(imported.some(f=>f.file===rule.pdfPath&&f.status==='linked-silk'));}
-assert.equal(layout.templateFor('CANECA CHOPP 500 ML','SILK'),undefined,'Do not guess unspecified mug capacity');
+for(const product of entries.ECOJOI_CATALOGUE){const rule=layout.templateFor(product.model,'SILK');if(rule?.pdfPath)assert(imported.some(f=>f.file===rule.pdfPath&&f.status==='linked-silk'));}
+assert.equal(layout.templateFor('CANECA CHOPP 500 ML','SILK')?.source,'Medidas ECOJOI 01/10/2026');
+assert.equal(layout.templateFor('CANECA DE CHOPP 500 ML','SILK'),undefined,'Legacy model with a different name has no confirmed template');
 console.log('PASS imported original PDFs: byte integrity, linked downloads and Eco 450 useful area.');
 for(const model of ['COPO ECO 450 ML','COPO ECO 450 ML COM TAMPA BUCKS','COPO ECO 600 ML']){
  const rule=layout.templateFor(model,'DIGITAL 360'),silk=layout.templateFor(model,'SILK'),profile=geometry.catalogueProfile(model);

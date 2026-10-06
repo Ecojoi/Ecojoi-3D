@@ -66,3 +66,13 @@ USIJET: página 450 = 715,3888 × 499,7754 pontos; 600 = 793,5 × 550,3611 ponto
 
 ## Importação de 25/09/2026
 Os oito PDFs originais de gabaritos.zip estão preservados em public/gabaritos, com hashes no manifesto docs/gabaritos-import-2026-09-25.json. Os seis PDFs com correspondência inequívoca estão vinculados às oito variantes de copos/taças no Silk e disponíveis pelo link Baixar gabarito PDF no cartão do produto. Caneca sem capacidade e balde sem produto no catálogo aguardam identificação; não recebem associação automática. Digital 360 mantém USIJET. Nenhum arquivo de arte, design, autenticação ou esquema de dados é alterado. A faixa exibida de designs Eco 450 Silk existentes passa a usar o novo limite de 200 × 125 mm.
+
+## Correção de escala da prévia 3D — 06/10/2026
+
+A visualização agora identifica margens transparentes e bordas uniformemente brancas de exportações de PNG/PDF para enquadrar somente o conteúdo visível da arte. O fundo só é tratado como papel quando ao menos 96% dos pixels das bordas da região analisada são brancos e opacos. Arte branca com transparência, imagens de fundo colorido e arquivos em branco continuam preservados. Não se altera o arquivo enviado.
+
+No modo Silk frente e verso com duas artes separadas, a frente e o verso possuem recortes e retângulos de enquadramento independentes. Antes, o verso utilizava o mesmo retângulo calculado para a frente, o que podia distorcer a arte quando os conteúdos tinham proporções distintas. Ambos ficam centralizados e limitados à área imprimível, sem esticar. A margem visual dos dois painéis passa a 2,5%; logotipos Pequeno/Médio/Máximo continuam com suas escalas existentes.
+
+A alteração é apenas da prévia 3D, não das áreas físicas de produção, geometrias, conteúdo salvo ou autenticação. A revisão matemática cobre copos e garrafas do catálogo pela altura, boca, base e largura útil de face. Os quatro copos descartáveis de 330/440/550/770 ml ainda usam dimensões proporcionais estimadas por falta de cotas no catálogo e **não devem ser tratados como calibrados para fabricação**. Para conferência definitiva, é necessário confrontar gabaritos e amostras físicas de cada modelo.
+
+Teste isolado: `node --experimental-strip-types tests/preview-artwork-bounds.mjs`; bateria de catálogo: `node --experimental-strip-types tests/catalogue-and-save.mjs` com dependências instaladas.
