@@ -75,7 +75,7 @@ export function catalogueProfile(model:string):PrintProfile|undefined{
  const twist=p.model.startsWith('COPO TWISTER')||p.model.startsWith('COPO VISUAL DRINK');
  return {points,printMin:.09,handle:false,lid:p.kind==='bucks'?'bucks':undefined,
   fullHeight:h,lidRadius:p.kind==='bucks'?3.9*unit:undefined,
-  band:{bottom:.12,top:.91},ridges:isDisposable,twist};
+  band:{bottom:.12,top:.91},ridges:isDisposable,paperLid:isPaper,twist};
 }
 
 export function catalogueBody(profile:PrintProfile){
@@ -147,6 +147,15 @@ export function addCatalogueDetails(scene:THREE.Scene,profile:PrintProfile,mat:T
    flip.rotation.z=-.48;
    add(new THREE.SphereGeometry(R*.10,16,12),cap,R*.96,y+total*.22,0);
   }
+ }
+ if(profile.paperLid){
+  // Raised, removable black sealing lid shown on both paper-cup photos.
+  const lidMat=new THREE.MeshPhysicalMaterial({color:'#242425',roughness:.48});
+  const R=r*1.055,thickness=y*.05;
+  add(new THREE.CylinderGeometry(R,R*.98,thickness*.55,96),lidMat,0,y+thickness*.28);
+  add(new THREE.CylinderGeometry(R*.92,R*.98,thickness*.85,96),lidMat,0,y+thickness*.98);
+  const mouth=new THREE.CylinderGeometry(R*.34,R*.42,thickness*.58,64);
+  add(mouth,lidMat,0,y+thickness*1.52,R*.47);
  }
  if(profile.handle){
   // A squared-off open handle (PS Cristal / Chopp), not the generic arc.
