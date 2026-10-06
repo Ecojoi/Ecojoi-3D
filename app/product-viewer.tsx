@@ -6,6 +6,7 @@ import {COLORS,type Product} from "@/lib/catalog";
 import * as THREE from "three";
 import {printArea,containRect,faceGeometry,wrapGeometry,templateFor,matchesSheet,applySheetUV} from "@/lib/print-layout";
 import {catalogueProfile,catalogueBody,addCatalogueDetails} from "@/lib/catalogue-geometry";
+import {catalogueProduct} from "@/lib/ecojoi-catalog";
 import type {PrintProfile} from "@/lib/print-layout";
 import {alphaBounds,templateFaces,canSplitTemplate} from "@/lib/artwork-regions";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
@@ -48,7 +49,10 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  // Eco cups (including Bucks lids and legacy Ecologic designs) have a matte
  // surface. Keep acrylic and all other products on their existing finish.
  const matteEco=/^COPO\s+ECO(?:LOGIC[OA]?)?\b/.test(product.model.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase());
- const col=COLORS.find(c=>c.name===product.color)||COLORS[2];const mat=new THREE.MeshPhysicalMaterial({color:col.hex,roughness:matteEco?1:col.frosted?.66:col.opacity===1?.22:.12,metalness:matteEco?0:col.metallic?.45:0,clearcoat:matteEco?0:.8,clearcoatRoughness:matteEco?1:.13,specularIntensity:matteEco?0:1,transmission:col.opacity===1?0:1-col.opacity,thickness:.055,ior:1.46,side:THREE.DoubleSide});
+ const family=catalogueProduct(product.model)?.kind;
+ const satinPP=family==="bottle"||family==="bag"||family==="paper"||family==="strap";
+ const matteFinish=matteEco||satinPP;
+ const col=COLORS.find(c=>c.name===product.color)||COLORS[2];const mat=new THREE.MeshPhysicalMaterial({color:col.hex,roughness:matteEco?1:satinPP?.70:col.frosted?.66:col.opacity===1?.22:.12,metalness:matteFinish?0:col.metallic?.45:0,clearcoat:matteFinish?0:.8,clearcoatRoughness:matteFinish?1:.13,specularIntensity:matteFinish?0:1,transmission:col.opacity===1?0:1-col.opacity,thickness:.055,ior:1.46,side:THREE.DoubleSide});
  const outer=profile.points.map(([r,y])=>new THREE.Vector2(r,y));const inner=profile.points.slice(1).reverse().map(([r,y])=>new THREE.Vector2(Math.max(.01,r-.018),Math.max(.03,y)));const geo=catalogueProfile(product.model)?catalogueBody(profile):new THREE.LatheGeometry([...outer,...inner,new THREE.Vector2(.01,.035)],128);
  if(profile.twist){const pos=geo.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),y=pos.getY(i),angle=Math.atan2(z,x),s=1+.03*Math.sin(angle*12+y*2);pos.setXYZ(i,x*s,y,z*s);}geo.computeVertexNormals();}
  if(col.gradient){const gc=document.createElement("canvas");gc.width=8;gc.height=256;const gctx=gc.getContext("2d")!;const g=gctx.createLinearGradient(0,0,0,256);g.addColorStop(0,"#fafcfd");g.addColorStop(.25,"#fafcfd");g.addColorStop(.8,col.hex);g.addColorStop(1,col.hex);gctx.fillStyle=g;gctx.fillRect(0,0,8,256);const gt=new THREE.CanvasTexture(gc);gt.colorSpace=THREE.SRGBColorSpace;textures.push(gt);mat.color.set(0xffffff);mat.map=gt;}const mesh=new THREE.Mesh(geo,mat);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);
