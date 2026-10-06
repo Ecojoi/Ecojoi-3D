@@ -18,7 +18,7 @@ export function catalogueProfile(model:string):PrintProfile|undefined{
   // Integrated die-cut handle, trapezoid body and flat printed faces.
   const width=p.mouth*unit;
   return {points:[[.01,0],[width*.32,.025],[width*.36,h*.16],[width*.49,h*.72],[width*.38,h*.83],[width*.21,h*.95]],
-   printMin:.10,flat:{width:width*.60,depth:.085},bag:true,band:{bottom:.12,top:.66}};
+   printMin:.10,flat:{width:width*.60,depth:.085},bag:true,fullHeight:h,band:{bottom:.12,top:.66}};
  }
 
  if(p.kind==='gin'||p.kind==='flute'){
