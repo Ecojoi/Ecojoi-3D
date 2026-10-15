@@ -20,7 +20,7 @@ export function colorMaterial(name:string){
 // Labels and compatibility are observed. Display colors and material settings are estimates pending physical calibration.
 const catalogueColors=[...new Set([...ECOJOI_CATALOGUE.flatMap(p=>p.colors),...previousCatalogue.names])].filter(n=>!source.names.includes(n));
 function catalogueMaterial(name:string){const c=colorMaterial(name),n=name.toUpperCase();
- const extra:Record<string,string>={'PRETA':'#15171a','NATURAL':'#efe9d5','BEGE':'#c8b184','BEGE OPACO':'#c8b184','KRAFT':'#b38a54','AZUL MARINHO':'#152843','AZUL TIFFANY':'#27cbc3','AZUL CELESTE OPACO':'#46aadd','VERDE MILITAR':'#535c3d','VERDE PADRÃO':'#258e49','VERDE BANDEIRA':'#128c48','CINZA CHUMBO':'#51575b','MARROM':'#674630','MARROM OPACO':'#674630','VERMELHO ROSÊ':'#8e1f38'};
+ const extra:Record<string,string>={'PRETA':'#15171a','NATURAL':'#efe9d5','BEGE':'#c8b184','BEGE OPACO':'#c8b184','KRAFT':'#b38a54','AZUL MARINHO':'#152843','AZUL TIFFANY':'#27cbc3','AZUL CELESTE OPACO':'#46aadd','VERDE MILITAR':'#535c3d','VERDE PADRÃO':'#258e49','VERDE BANDEIRA':'#128c48','CINZA CHUMBO':'#51575b','MARROM':'#4b2d20','MARROM OPACO':'#4b2d20','VERMELHO ROSÊ':'#8e1f38'};
  return {...c,hex:extra[n]??c.hex,opacity:/NEON|CRISTAL|FUMÊ/.test(n)?c.opacity:1};
 }
 export const COLORS=[...source.names.map(colorMaterial),...catalogueColors.map(catalogueMaterial)];

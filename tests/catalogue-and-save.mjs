@@ -21,6 +21,7 @@ for(const p of entries.ECOJOI_CATALOGUE){
  }
 }
 for(const p of legacy.palettes)for(const print of p.prints){assert(!catalog.modelsFor(print).includes(p.model));assert(catalog.modelsFor(print,p.model).includes(p.model));assert.deepEqual(catalog.colorsFor(print,p.model),p.indices.map(i=>legacy.names[i]));}
+assert.equal(catalog.COLORS.find(c=>c.name==='Marrom Opaco')?.hex,'#4b2d20','The opaque brown should be darker than the old preview.');
 let calibrated=0;
 for(const p of entries.ECOJOI_CATALOGUE){
  const profile=geometry.catalogueProfile(p.model),rule=layout.templateFor(p.model,'SILK FRENTE E VERSO');
