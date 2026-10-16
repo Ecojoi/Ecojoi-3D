@@ -19,7 +19,9 @@ export async function POST(req:Request,ctx:{params:Promise<{action:string}>}){
   if(!["login","activate","password"].includes(action))return json({error:"Página não encontrada."},404);
   const email=typeof b.email==="string"?b.email.trim().toLowerCase():"";
   const password=typeof b.password==="string"?b.password:"";
-  if(password.length<12||password.length>128||email.length>254)return json({error:"Use uma senha entre 12 e 128 caracteres."},400);
+  const legacyLogin=action==="login";
+  const passwordLengthValid=legacyLogin?password.length>=1&&password.length<=128:password.length>=12&&password.length<=128;
+  if(!passwordLengthValid||email.length>254)return json({error:legacyLogin?"Informe uma senha válida.":"Use uma senha entre 12 e 128 caracteres."},400);
   const now=Date.now(),window=Math.floor(now/900000);
   const ip=req.headers.get("cf-connecting-ip")||"unknown";
   const keys=[`ip:${await digest(ip)}:${window}`,`email:${await digest(email)}:${window}`];
