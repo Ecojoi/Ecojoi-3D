@@ -6,6 +6,13 @@ const email='seedy@sites.test',password='Local-test-'+crypto.randomUUID(),nextPa
 let count=0;const check=(label,fn)=>{fn();console.log('PASS '+label);count++;};
 async function call(action,data={},cookie='',extra={}){const r=await fetch(origin+'/api/auth/'+action,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{}),...extra},body:JSON.stringify(data)});const raw=await r.text();let body;try{body=JSON.parse(raw);}catch{body={error:raw};}return {status:r.status,body,cookie:r.headers.get('set-cookie')};}
 let r=await fetch(origin);const html=await r.text();check('Anonymous root displays ECOJOI login',()=>{assert.equal(r.status,200);assert(html.includes('Bem-vindo ao Studio'));});
+let recoveryPage=await fetch(origin+'/esqueci-senha');check('Password recovery page is public',()=>{assert.equal(recoveryPage.status,200);assert((recoveryPage.headers.get('content-type')||'').includes('text/html'));});
+r=await call('reset/request',{email:'invalid'});check('Reset request rejects malformed email',()=>assert.equal(r.status,400));
+r=await call('reset/request',{email:'missing-reset@sites.test'},'',{Origin:'https://other.invalid'});check('Cross-origin reset requests rejected',()=>assert.equal(r.status,403));
+r=await call('reset/confirm',{token:'bad-token',password:'Long-password-2026'});check('Reset confirmation rejects malformed token',()=>assert.equal(r.status,400));
+r=await call('reset/confirm',{token:'0'.repeat(64),password:'short'});check('Reset confirmation requires strong new password',()=>assert.equal(r.status,400));
+r=await call('reset/confirm',{token:'0'.repeat(64),password:'Long-password-2026'});check('Unrecognized reset token cannot change password',()=>assert.equal(r.status,400));
+r=await call('login',{email:'missing-reset@sites.test',password:'short'});check('Legacy short password passes validation but never bypasses authentication',()=>assert.equal(r.status,401));
 r=await call('activate',{password});check('Anonymous activation blocked',()=>assert.equal(r.status,403));
 r=await call('login',{email,password},'',{Origin:'https://other.invalid'});check('Cross-origin login blocked',()=>assert.equal(r.status,403));
 r=await call('activate',{password},'__sites_local_auth=1');check('Verified local owner activation',()=>assert.equal(r.status,201,JSON.stringify(r.body)));
