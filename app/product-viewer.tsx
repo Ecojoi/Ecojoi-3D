@@ -11,6 +11,8 @@ import {alphaBounds,templateFaces,canSplitTemplate} from "@/lib/artwork-regions"
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
 
+import {applyInks} from "@/lib/ink-palette";
+
 type Profile=PrintProfile;
 // Preliminary normalized profiles. Replace with measured production profiles after validation.
 export function modelProfile(name:string):Profile { const active=catalogueProfile(name);if(active)return active;name=name.toUpperCase();
@@ -58,7 +60,8 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  if(product.art){const source=`/api/studio/assets/${product.art.id}${token?`?token=${encodeURIComponent(token)}`:""}`;new THREE.TextureLoader().load(source,(raw)=>{
   if(disposed){raw.dispose();return;}textures.push(raw);
   const twoFaces=product.print==="SILK FRENTE E VERSO";
-  const img=raw.image as HTMLImageElement;
+  let img=raw.image as HTMLImageElement|HTMLCanvasElement;
+  if(product.inkPalette){const recolored=document.createElement('canvas');recolored.width=img.width;recolored.height=img.height;const ctx=recolored.getContext('2d')!;ctx.drawImage(img,0,0);const pixels=ctx.getImageData(0,0,img.width,img.height);applyInks(pixels.data,product.inkPalette.keys,product.inkPalette.colors);ctx.putImageData(pixels,0,0);img=recolored;}
   let split=twoFaces&&product.artMode==="template";
   let bounds={x:0,y:0,width:img.width,height:img.height};
   // Analyze once for both safe face separation and transparent logo margins.
@@ -119,7 +122,7 @@ export default function ProductViewer({product,token}:{product:Product;token?:st
  const resize=()=>{if(!renderer)return;const w=el.clientWidth||600,h=el.clientHeight||480;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();};observer=new ResizeObserver(resize);observer.observe(el);resize();visibility=new IntersectionObserver(entries=>{visible=entries[0]?.isIntersecting??true;});visibility.observe(el);const tick=()=>{if(disposed)return;if(visible){controls?.update();renderer?.render(scene,camera);}frame=requestAnimationFrame(tick);};tick();
  }catch{setError("Não foi possível iniciar o 3D. Use um navegador com WebGL e aceleração gráfica habilitados.");setLoading(false);}
  return ()=>{disposed=true;cancelAnimationFrame(frame);observer?.disconnect();visibility?.disconnect();controls?.dispose();textures.forEach(t=>t.dispose());const materials=new Set<THREE.Material>();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>materials.add(m));}});materials.forEach(m=>m.dispose());environment?.dispose();renderer?.dispose();el.replaceChildren();};
- },[product.model,product.color,product.print,product.art?.id,product.artMode,product.logoSize,token]);
+ },[product.model,product.color,product.print,product.art?.id,product.artMode,product.logoSize,JSON.stringify(product.inkPalette),token]);
  useEffect(()=>{const f=()=>setFull(!!document.fullscreenElement);document.addEventListener("fullscreenchange",f);return()=>document.removeEventListener("fullscreenchange",f);},[]);
  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await wrapper.current?.requestFullscreen();}catch{setError("Tela cheia indisponível neste navegador.");}}
  return <div className="viewer-wrap" ref={wrapper}><div ref={host} className="viewer-canvas"/><div className="viewer-actions"><Button variant="outline" size="icon" aria-label="Restaurar visão" title="Restaurar visão" onClick={()=>reset.current()}><RotateCcw/></Button><Button variant="outline" size="icon" aria-label={full?"Sair da tela cheia":"Visualizar em tela cheia"} onClick={fullscreen}>{full?<Minimize/>:<Maximize/>}</Button></div>{loading&&<div className="viewer-loading" role="status">Carregando arte…</div>}{error&&<div className="viewer-error" role="alert">{error}</div>}{artNotice&&<div className="viewer-art-notice" role="status">{artNotice}</div>}<div className="viewer-hint"><Rotate3D size={14}/>Arraste para girar · role para ampliar</div></div>;

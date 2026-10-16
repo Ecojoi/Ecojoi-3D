@@ -25,7 +25,7 @@ function catalogueMaterial(name:string){const c=colorMaterial(name),n=name.toUpp
 }
 export const COLORS=[...source.names.map(colorMaterial),...catalogueColors.map(catalogueMaterial)];
 export type Asset = {id:string;name:string;size:number;type:string};
-export type Product = {id:string;print:string;model:string;color:string;art:Asset|null;artMode?:"logo"|"template";logoSize?:"small"|"medium"|"large"};
+export type Product = {id:string;print:string;model:string;color:string;art:Asset|null;inkPalette?:{keys:number[];colors:string[]};artMode?:"logo"|"template";logoSize?:"small"|"medium"|"large"};
 export type Design = {id:string;name:string;products:Product[];createdAt:number;updatedAt:number;expiresAt:number|null;revokedAt:number|null;token:string|null;version:number};
 export function status(d:Design,now=Date.now()){return !d.token?"Rascunho":d.revokedAt?"Revogado":d.expiresAt && d.expiresAt>now?"Ativo":"Expirado";}
 export function requirements(d:Design){return [d.name.trim().length>0,d.products.length>0,d.products.length>0&&d.products.every(p=>p.print&&p.model&&p.color),d.products.length>0&&d.products.every(p=>p.art)];}
