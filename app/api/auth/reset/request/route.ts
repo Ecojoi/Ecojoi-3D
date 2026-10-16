@@ -22,7 +22,7 @@ export async function POST(req:Request){
   const config=env as unknown as EmailConfig;
   if(!config.RESEND_API_KEY||!config.ECOJOI_RESET_FROM)return reply({error:"Recuperação por e-mail indisponível. Contate o administrador da ECOJOI."},503);
   const now=Date.now(),window=Math.floor(now/900000);
-  const ip=req.headers.get("cf-connecting-ip")||req.headers.get("x-forwarded-for")?.split(",")[0]||"unknown";
+  const ip=req.headers.get("cf-connecting-ip")||"unknown";
   const db=authDb();
   const keys=["reset-ip:"+await digest(ip)+":"+window,"reset-email:"+await digest(email)+":"+window];
   const attempts=await db.batch(keys.map(key=>db.prepare("INSERT INTO ecojoi_auth_attempts (id,attempts,expires_at) VALUES (?,1,?) ON CONFLICT(id) DO UPDATE SET attempts=attempts+1 RETURNING attempts").bind(key,now+1800000)));
