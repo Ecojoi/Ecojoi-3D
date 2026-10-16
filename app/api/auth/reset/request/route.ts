@@ -44,7 +44,7 @@ export async function POST(req:Request){
   try{
    const sent=await fetch("https://api.resend.com/emails",{
     method:"POST",
-    headers:{"Authorization":"Bearer "+config.RESEND_API_KEY,"Content-Type":"application/json"},
+    headers:{"Authorization":"Bearer "+config.RESEND_API_KEY,"Content-Type":"application/json","User-Agent":"ecojoi-studio-3d/1.0"},
     body:JSON.stringify({
      from:config.ECOJOI_RESET_FROM,
      to:[account.email],
