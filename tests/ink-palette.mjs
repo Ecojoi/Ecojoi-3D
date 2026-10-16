@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {analyzeInks,applyInks} from '../lib/ink-palette.ts';
+const pixels=new Uint8ClampedArray([255,0,0,255,255,0,0,255,0,255,0,255,0,0,255,255,255,255,0,255,255,0,255,255,12,34,56,0]);
+const inks=analyzeInks(pixels);assert.equal(inks.length,4);assert.equal(inks[0].color,'#ff0000');
+applyInks(pixels,inks.map(i=>i.key),inks.map(i=>i.color));
+assert.equal(new Set(Array.from({length:6},(_,i)=>[...pixels.slice(i*4,i*4+3)].join(','))).size,4);
+assert.deepEqual([...pixels.slice(24)],[12,34,56,0]);
+const excluded=new Uint8ClampedArray([12,34,56,128]);applyInks(excluded,inks.map(i=>i.key),['#123456','#ffffff','#000000','#abcdef']);assert.deepEqual([...excluded],[18,52,86,128]);
+applyInks(pixels,inks.map(i=>i.key),inks.map(()=>'#112233'));assert.deepEqual([...pixels.slice(0,3)],[17,34,51]);
+assert.deepEqual(analyzeInks(new Uint8ClampedArray(4)),[]);
+console.log('PASS: four ink limit, dominant fallback, recoloring, alpha and empty artwork');
