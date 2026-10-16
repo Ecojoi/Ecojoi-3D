@@ -8,6 +8,8 @@ async function call(action,data={},cookie='',extra={}){const r=await fetch(origi
 let r=await fetch(origin);const html=await r.text();check('Anonymous root displays ECOJOI login',()=>{assert.equal(r.status,200);assert(html.includes('Bem-vindo ao Studio'));});
 r=await call('activate',{password});check('Anonymous activation blocked',()=>assert.equal(r.status,403));
 r=await call('login',{email,password},'',{Origin:'https://other.invalid'});check('Cross-origin login blocked',()=>assert.equal(r.status,403));
+r=await call('login',{email,password:'senha-curta'});check('Existing short passwords reach hash verification instead of minimum-length rejection',()=>assert.equal(r.status,401));
+r=await call('activate',{password:'senha-curta'},'__sites_local_auth=1');check('New-account activation still requires 12 characters',()=>assert.equal(r.status,400));
 r=await call('activate',{password},'__sites_local_auth=1');check('Verified local owner activation',()=>assert.equal(r.status,201,JSON.stringify(r.body)));
 check('Session cookie is secure and HTTP-only',()=>{assert(r.cookie.includes('HttpOnly'));assert(r.cookie.includes('Secure'));assert(r.cookie.includes('SameSite=Lax'));});
 let cookie=r.cookie.split(';')[0];
@@ -20,6 +22,7 @@ r=await call('password',{password:nextPassword,currentPassword:password},cookie)
 response=await fetch(origin+'/api/studio/designs',{headers:{Cookie:cookie}});check('Password change invalidates old sessions',()=>assert.equal(response.status,401));
 r=await call('login',{email,password});check('Old password rejected',()=>assert.equal(r.status,401));
 r=await call('login',{email,password:nextPassword});check('New password works',()=>assert.equal(r.status,200));cookie=r.cookie.split(';')[0];
+r=await call('password',{password:'senha-curta',currentPassword:nextPassword},cookie);check('Changing password to fewer than 12 characters is blocked',()=>assert.equal(r.status,400));
 r=await call('logout',{},cookie);check('Logout clears cookie',()=>{assert.equal(r.status,200);assert(r.cookie.includes('Max-Age=0'));});
 response=await fetch(origin+'/api/studio/designs',{headers:{Cookie:cookie}});check('Logged-out session rejected',()=>assert.equal(response.status,401));
 response=await fetch(origin+'/api/studio/designs',{headers:{Cookie:'__Host-ecojoi_session='+'0'.repeat(64)}});check('Forged session rejected',()=>assert.equal(response.status,401));
