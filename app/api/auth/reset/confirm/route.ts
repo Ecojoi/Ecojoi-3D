@@ -14,7 +14,7 @@ export async function POST(req:Request){
   if(typeof token!=="string"||!/^[a-f0-9]{64}$/.test(token))return reply({error:"Link de recuperação inválido ou expirado."},400);
   if(typeof password!=="string"||password.length<12||password.length>128)return reply({error:"Use uma senha entre 12 e 128 caracteres."},400);
   const db=authDb(),now=Date.now(),window=Math.floor(now/900000);
-  const ip=req.headers.get("cf-connecting-ip")||req.headers.get("x-forwarded-for")?.split(",")[0]||"unknown";
+  const ip=req.headers.get("cf-connecting-ip")||"unknown";
   const key="reset-confirm-ip:"+await digest(ip)+":"+window;
   const row=await db.prepare("INSERT INTO ecojoi_auth_attempts (id,attempts,expires_at) VALUES (?,1,?) ON CONFLICT(id) DO UPDATE SET attempts=attempts+1 RETURNING attempts").bind(key,now+1800000).first<{attempts:number}>();
   if(!row||Number(row.attempts)>12)return reply({error:"Muitas tentativas. Aguarde 15 minutos."},429);
